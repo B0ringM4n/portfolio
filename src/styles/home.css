@@ -245,7 +245,7 @@
 
 .tech-wall-section__meta p {
   margin-block-start: 0.2rem;
-  color: var(--color-ash);
+  color: var(--color-muted);
   font-size: var(--font-size-label);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -319,9 +319,20 @@
 
 .project-card__media {
   grid-column: 1 / -1;
-  aspect-ratio: 8 / 5;
   overflow: clip;
   background: var(--color-stone);
+}
+
+.project-card__media--landscape {
+  aspect-ratio: 8 / 5;
+}
+
+.project-card__media--editorial {
+  aspect-ratio: 4 / 3;
+}
+
+.project-card__media--cinematic {
+  aspect-ratio: 16 / 9;
 }
 
 .project-card__artwork,
@@ -478,7 +489,7 @@
 
 .capabilities-section__index {
   grid-column: 1 / 2;
-  color: var(--color-ash);
+  color: var(--color-muted);
 }
 
 .capabilities-section__list h3 {
@@ -492,6 +503,22 @@
 .capabilities-section__description {
   grid-column: 9 / -1;
   max-inline-size: 31ch;
+}
+
+.projects-section__empty {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 1rem;
+  max-inline-size: 34rem;
+  padding-block: 2rem;
+  border-block: var(--hairline);
+  font-size: clamp(1.4rem, 3vw, 2.6rem);
+}
+
+.projects-section__empty a {
+  justify-self: start;
+  font-size: var(--font-size-body);
+  font-weight: 600;
 }
 
 .contact-section {
@@ -786,12 +813,6 @@
   .project-card__link,
   .project-card__content {
     grid-template-columns: 1fr;
-  }
-
-  .project-card__media,
-  .project-card:nth-child(2) .project-card__media,
-  .project-card:nth-child(3n) .project-card__media {
-    aspect-ratio: 8 / 5;
   }
 
   .project-card__number,

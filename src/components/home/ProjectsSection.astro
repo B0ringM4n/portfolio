@@ -1,27 +1,38 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import ProjectCard from '@/components/home/ProjectCard.astro';
+import type { SiteData } from '@/types/site';
 
 interface Props {
   projects: CollectionEntry<'projects'>[];
+  copy: SiteData['copy'];
 }
 
-const { projects } = Astro.props;
+const { projects, copy } = Astro.props;
 const projectCount = String(projects.length).padStart(2, '0');
 const firstProjectId = projects[0] ? `#project-${projects[0].id}` : '#contact';
 ---
 
 <section id="projects" class="projects-section" aria-labelledby="projects-title">
   <div class="home-frame projects-section__heading">
-    <h2 id="projects-title" data-reveal>Proyectos seleccionados</h2>
+    <h2 id="projects-title" data-reveal>{copy.projectsHeading}</h2>
     <p class="projects-section__count">
       <span aria-hidden="true">{projectCount}</span>
-      <span class="sr-only">{projects.length} proyectos</span>
+      <span class="sr-only">{projects.length} {copy.projectsCountNoun}</span>
     </p>
-    <a class="projects-section__jump" href={firstProjectId} data-magnetic>VIEW PROJECTS ↓</a>
+    <a class="projects-section__jump" href={firstProjectId} data-magnetic>{copy.projectsJump}</a>
   </div>
 
   <div class="home-frame projects-section__list">
-    {projects.map((project, index) => <ProjectCard project={project} index={index} />)}
+    {
+      projects.length > 0 ? (
+        projects.map((project, index) => <ProjectCard project={project} index={index} copy={copy} />)
+      ) : (
+        <div class="projects-section__empty" role="status">
+          <p>{copy.projectsEmpty}</p>
+          <a href="#contact">{copy.projectsEmptyCta} →</a>
+        </div>
+      )
+    }
   </div>
 </section>

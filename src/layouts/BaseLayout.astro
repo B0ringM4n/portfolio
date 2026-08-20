@@ -31,14 +31,16 @@ const canonical = Astro.site ? new URL(canonicalPath, Astro.site) : undefined;
     <ClientRouter fallback="swap" />
   </head>
   <body>
+    <div class="page-transition-cover" aria-hidden="true" data-page-transition-cover transition:persist></div>
     <Preloader />
-    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <a class="skip-link" href="#main-content" data-menu-background>{siteData.copy.skipLink}</a>
     <Header
       name={siteData.identity.name}
       availability={siteData.identity.availability}
       navigation={siteData.navigation}
+      copy={siteData.copy}
     />
-    <main id="main-content">
+    <main id="main-content" data-menu-background>
       <slot />
     </main>
     <slot name="contact" />

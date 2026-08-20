@@ -55,7 +55,7 @@ test('landing preserves exact content and approved motion-hook contracts', () =>
   const motionHookCounts = new Map([
     ['data-hero-line', 3],
     ['data-sphere', 1],
-    ['data-reveal', 32],
+    ['data-reveal', 29],
     ['data-parallax', 3],
     ['data-magnetic', 6],
   ]);
@@ -65,6 +65,31 @@ test('landing preserves exact content and approved motion-hook contracts', () =>
   for (const [hook, expected] of motionHookCounts) {
     assert.equal(count(html, new RegExp(hook, 'g')), expected, `${hook} count changed`);
   }
+  assert.equal(count(html, /data-hero-opening/g), 5);
+  assert.match(html, /data-hero-opening="header"/);
+  assert.match(html, /data-hero-opening="scroll"/);
+  assert.doesNotMatch(html, /data-hero-opening="[^"]+"[^>]*data-reveal/);
+});
+
+test('shell exposes an ink transition cover with a reduced-motion fallback', () => {
+  const html = home();
+  const css = homeStyles();
+  assert.equal(count(html, /data-page-transition-cover/g), 1);
+  assert.match(css, /\.page-transition-cover\{[^}]*background:var\(--color-ink\)[^}]*visibility:hidden/);
+  const activeCover = css.match(/\.is-transitioning \.page-transition-cover\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(activeCover, /transform:translateY\(0\)/);
+  assert.match(activeCover, /visibility:visible/);
+  assert.match(css, /prefers-reduced-motion:reduce[\s\S]*\.page-transition-cover\{[^}]*transition:none/);
+});
+
+test('featured projects declare three controlled uncropped media proportions', () => {
+  const html = home();
+  const css = homeStyles();
+  for (const ratio of ['landscape', 'editorial', 'cinematic']) {
+    assert.match(html, new RegExp(`data-media-ratio="${ratio}"`));
+    assert.match(css, new RegExp(`project-card__media--${ratio}\\{[^}]*aspect-ratio:`));
+  }
+  assert.match(css, /\.project-card__media img\{[^}]*object-fit:contain/);
 });
 
 test('project count exposes text to assistive technology instead of an aria-label override', () => {

@@ -7,9 +7,10 @@ import type { SiteData } from '@/types/site';
 interface Props {
   about: SiteData['about'];
   email: string;
+  contactCta: string;
 }
 
-const { about, email } = Astro.props;
+const { about, email, contactCta } = Astro.props;
 ---
 
 <section id="about" class="about-section" aria-labelledby="about-title">
@@ -21,7 +22,7 @@ const { about, email } = Astro.props;
     <div class="about-section__intro" data-reveal>
       <SectionLabel text={about.label} />
       <h2 id="about-title">{about.lead}</h2>
-      <TextLink href={`mailto:${email}`} label="Escríbeme" class="about-section__link" />
+      <TextLink href={`mailto:${email}`} label={contactCta} class="about-section__link" />
     </div>
 
     <p class="about-section__body" data-reveal>{about.body}</p>

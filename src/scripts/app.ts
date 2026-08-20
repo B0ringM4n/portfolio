@@ -4,6 +4,16 @@ import { setupPreloader } from './preloader';
 
 let cleanupPage: (() => void) | undefined;
 
+const beginPageTransition = () => {
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('is-transitioning');
+  }
+};
+
+const endPageTransition = () => {
+  document.documentElement.classList.remove('is-transitioning');
+};
+
 function safelySetup(setup: () => () => void) {
   try {
     return setup();
@@ -36,7 +46,9 @@ function initPage() {
 }
 
 document.addEventListener('astro:before-swap', () => safelyCleanup(cleanupPage));
-document.addEventListener('astro:after-swap', () => {
-  document.documentElement.classList.remove('is-transitioning');
+document.addEventListener('astro:before-preparation', beginPageTransition);
+document.addEventListener('astro:after-swap', endPageTransition);
+document.addEventListener('astro:page-load', () => {
+  endPageTransition();
+  initPage();
 });
-document.addEventListener('astro:page-load', initPage);

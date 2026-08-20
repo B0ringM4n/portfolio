@@ -8,7 +8,7 @@
 .project-hero__metadata dt,
 .gallery figcaption,
 .related-project__content p {
-  color: var(--color-ash);
+  color: var(--color-muted);
   font-size: var(--font-size-label);
   font-weight: 600;
   letter-spacing: 0.05em;

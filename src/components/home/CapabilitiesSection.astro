@@ -4,15 +4,16 @@ import type { Capability } from '@/types/site';
 
 interface Props {
   capabilities: Capability[];
+  label: string;
 }
 
-const { capabilities } = Astro.props;
+const { capabilities, label } = Astro.props;
 ---
 
 <section id="capabilities" class="capabilities-section" aria-labelledby="capabilities-title">
   <div class="home-frame">
-    <SectionLabel text="Capacidades" />
-    <h2 id="capabilities-title" class="sr-only">Capacidades</h2>
+    <SectionLabel text={label} />
+    <h2 id="capabilities-title" class="sr-only">{label}</h2>
 
     <ol class="capabilities-section__list">
       {

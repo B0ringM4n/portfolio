@@ -18,11 +18,11 @@ npm run verify
 npm run test:e2e
 ```
 
-`npm run verify` checks Astro and TypeScript, runs the unit and generated-output contracts, creates `dist/`, and verifies the production routes and content. Playwright separately exercises the real desktop and mobile browser behavior.
+`npm run verify` checks Astro and TypeScript, runs Vitest, creates `dist/`, runs `npm run test:output` against the generated HTML/assets, and verifies the production routes and content. Playwright separately exercises the real desktop and mobile browser behavior.
 
 ## Replace identity and landing copy
 
-Edit `src/data/site.ts`. It owns the name, role, location, timezone, availability, SEO text, navigation, three hero lines, statement, biography, technology wall, six capabilities, contact copy and email, and social links. Keep section links root-relative (`/#about`, `/#projects`, and `/#contact`) so they work from project and 404 routes.
+Edit `src/data/site.ts`. It owns the name, role, location, timezone, availability, SEO text, navigation, all visible landing labels and calls to action, three hero lines, statement, biography, technology wall, six capabilities, contact copy and email, and social links. Keep section links root-relative (`/#about`, `/#projects`, and `/#contact`) so they work from project and 404 routes. The landing also renders an editorial contact prompt during development when no project records are available; production verification still requires the configured collection.
 
 The production contract currently expects exactly three hero lines, ten technologies, six capabilities, and three projects. Update the corresponding tests and verifier deliberately if the portfolio structure changes.
 
@@ -55,16 +55,16 @@ gallery:
 
 Every informative image needs specific, non-empty `coverAlt` or `alt` text. Use `wide` for a full gallery row and `half` for a two-up desktop item; all items become full width on mobile. Gallery order is the YAML list order. Replace assets and paths together, keep at least three items, and never reuse an `order` value from another project.
 
-Filenames and pixel dimensions are replaceable: the asset contract follows every local `cover` and gallery `image` path in frontmatter instead of requiring the default WebP names. Each referenced file must exist, use `.avif`, `.webp`, `.png`, `.jpeg`, or `.jpg` (case-insensitive), and report positive image dimensions. A project's gallery files must remain pairwise distinct. Cover artwork uses `object-fit: contain`, so a replacement keeps its complete composition without requiring the current 8:5 source ratio. `scripts/generate-project-assets.mjs` remains the deterministic way to restore the default WebP artwork; it is not required for custom replacements.
+Filenames and pixel dimensions are replaceable: the asset contract follows every local `cover` and gallery `image` path in frontmatter instead of requiring the default WebP names. Each referenced file must exist, use `.avif`, `.webp`, `.png`, `.jpeg`, or `.jpg` (case-insensitive), and report positive image dimensions. A project's gallery files must remain pairwise distinct. Cover artwork uses `object-fit: contain`, so a replacement keeps its complete composition without requiring the current source ratio. The three landing features deliberately cycle through landscape, editorial and cinematic frames without cropping the artwork. `scripts/generate-project-assets.mjs` remains the deterministic way to restore the default WebP artwork; it is not required for custom replacements.
 
 ## Motion and reduced motion
 
 Client behavior lives in `src/scripts/`:
 
-- `app.ts` owns Astro page lifecycle setup and cleanup.
+- `app.ts` owns Astro page lifecycle setup/cleanup and the shared ink page-transition cover.
 - `preloader.ts` owns the first-visit cover and its 2.5-second hard dismissal.
-- `menu.ts` owns the enhanced mobile navigation.
-- `motion.ts` owns GSAP, ScrollTrigger, Lenis, hero/sphere reveals, editorial reveals, parallax, and restrained magnetic links.
+- `menu.ts` owns the enhanced mobile dialog navigation, background inert state and its pointer-accessible close control.
+- `motion.ts` owns GSAP, ScrollTrigger, Lenis, the coordinated header/hero/sphere opening, editorial reveals, parallax, and restrained magnetic links.
 
 Do not hide semantic content while waiting for JavaScript. When `prefers-reduced-motion: reduce` matches, Lenis, parallax, magnetic movement and multi-step entrance timelines remain disabled and content is immediately usable. Any new motion must preserve that fallback and return page-scoped cleanup through the existing lifecycle.
 

@@ -14,23 +14,38 @@ const focusableSelector = [
 export function setupMenu(root: Document = document): Cleanup {
   const trigger = root.querySelector<HTMLButtonElement>('[data-menu-toggle]');
   const panel = root.querySelector<HTMLElement>('[data-menu-panel]');
-  const main = root.querySelector<HTMLElement>('main');
+  const closeButton = root.querySelector<HTMLButtonElement>('[data-menu-close]');
+  const backgrounds = Array.from(
+    root.querySelectorAll<HTMLElement>('[data-menu-background]'),
+  );
 
-  if (!trigger || !panel) {
+  if (!trigger || !panel || !closeButton) {
     return () => {};
   }
 
   const documentElement = root.documentElement;
+  const openLabel = trigger.getAttribute('aria-label') ?? 'Abrir menú';
+  const openStateLabel = trigger.dataset.menuOpenLabel ?? 'Menú abierto';
+  const previousInert = new Map<HTMLElement, boolean>();
   let isOpen = false;
+
+  const restoreBackground = () => {
+    for (const element of backgrounds) {
+      if (previousInert.get(element)) element.setAttribute('inert', '');
+      else element.removeAttribute('inert');
+    }
+    previousInert.clear();
+  };
 
   const closeMenu = (restoreFocus = true) => {
     if (!isOpen) return;
 
     isOpen = false;
     trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-label', openLabel);
     panel.hidden = true;
     panel.removeAttribute('data-menu-open');
-    main?.removeAttribute('inert');
+    restoreBackground();
 
     if (restoreFocus) trigger.focus();
   };
@@ -38,9 +53,13 @@ export function setupMenu(root: Document = document): Cleanup {
   const openMenu = () => {
     isOpen = true;
     trigger.setAttribute('aria-expanded', 'true');
+    trigger.setAttribute('aria-label', openStateLabel);
     panel.hidden = false;
     panel.setAttribute('data-menu-open', '');
-    main?.setAttribute('inert', '');
+    for (const element of backgrounds) {
+      previousInert.set(element, element.hasAttribute('inert'));
+      element.setAttribute('inert', '');
+    }
 
     const firstFocusable = panel.querySelector<HTMLElement>(focusableSelector);
     (firstFocusable ?? panel).focus();
@@ -92,18 +111,21 @@ export function setupMenu(root: Document = document): Cleanup {
 
   documentElement.classList.add('js-enhanced');
   trigger.addEventListener('click', handleToggle);
+  closeButton.addEventListener('click', handleToggle);
   root.addEventListener('keydown', handleKeydown);
   panel.addEventListener('click', handlePanelClick);
 
   return () => {
     trigger.removeEventListener('click', handleToggle);
+    closeButton.removeEventListener('click', handleToggle);
     root.removeEventListener('keydown', handleKeydown);
     panel.removeEventListener('click', handlePanelClick);
     closeMenu(false);
     documentElement.classList.remove('js-enhanced');
     trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-label', openLabel);
     panel.hidden = true;
     panel.removeAttribute('data-menu-open');
-    main?.removeAttribute('inert');
+    restoreBackground();
   };
 }

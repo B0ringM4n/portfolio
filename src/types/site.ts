@@ -30,6 +30,26 @@ export interface SiteData {
     title: string;
     description: string;
   };
+  copy: {
+    skipLink: string;
+    menuText: string;
+    menuOpenLabel: string;
+    menuCloseLabel: string;
+    menuOpenStateLabel: string;
+    statementHeading: string;
+    aboutContactCta: string;
+    technologiesHeading: string;
+    capabilitiesLabel: string;
+    projectsHeading: string;
+    projectsJump: string;
+    projectsEmpty: string;
+    projectsEmptyCta: string;
+    projectsCountNoun: string;
+    projectLinkLabelPrefix: string;
+    projectCapabilitiesLabel: string;
+    technologyMarkAltPrefix: string;
+    heroScroll: string;
+  };
   navigation: NavItem[];
   hero: {
     lines: [string, string, string];

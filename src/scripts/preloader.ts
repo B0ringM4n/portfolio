@@ -25,7 +25,7 @@ export function setupPreloader(root: Document = document): Cleanup {
     timeline = undefined;
   };
 
-  const dismiss = () => {
+  const dismiss = (persistCompletion = false) => {
     if (dismissed) return;
     dismissed = true;
     stopAnimation();
@@ -34,51 +34,50 @@ export function setupPreloader(root: Document = document): Cleanup {
     cover.hidden = true;
     status.textContent = completionMessage;
     root.dispatchEvent(new CustomEvent('portfolio:preloader-complete'));
+    if (persistCompletion) {
+      try {
+        window.sessionStorage.setItem(sessionKey, 'true');
+      } catch {
+        // Persistence is optional; completed content must remain usable.
+      }
+    }
   };
 
-  hardDismissTimer = window.setTimeout(dismiss, 2_500);
+  hardDismissTimer = window.setTimeout(() => dismiss(true), 2_500);
 
   try {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const hasPlayed = window.sessionStorage.getItem(sessionKey) === 'true';
 
     if (reducedMotion || hasPlayed) {
-      dismiss();
+      dismiss(reducedMotion && !hasPlayed);
     } else {
-      try {
-        window.sessionStorage.setItem(sessionKey, 'true');
-      } catch {
-        dismiss();
-      }
+      cover.hidden = false;
+      documentElement.classList.add('is-preloading');
+      counter.textContent = '5%';
 
-      if (!dismissed) {
-        cover.hidden = false;
-        documentElement.classList.add('is-preloading');
-        counter.textContent = '5%';
+      const runOpening = () => {
+        if (!active || dismissed) return;
 
-        const runOpening = () => {
-          if (!active || dismissed) return;
+        const progress = { value: 5 };
+        timeline = gsap
+          .timeline({ onComplete: () => dismiss(true) })
+          .to(progress, {
+            value: 100,
+            duration: 0.8,
+            ease: 'power2.inOut',
+            onUpdate: () => {
+              counter.textContent = `${Math.round(progress.value)}%`;
+            },
+          })
+          .to(cover, { yPercent: -100, duration: 0.65, ease: 'power3.inOut' }, '-=0.05');
+      };
 
-          const progress = { value: 5 };
-          timeline = gsap
-            .timeline({ onComplete: dismiss })
-            .to(progress, {
-              value: 100,
-              duration: 0.8,
-              ease: 'power2.inOut',
-              onUpdate: () => {
-                counter.textContent = `${Math.round(progress.value)}%`;
-              },
-            })
-            .to(cover, { yPercent: -100, duration: 0.65, ease: 'power3.inOut' }, '-=0.05');
-        };
-
-        const fontsReady = root.fonts?.ready ?? Promise.resolve();
-        void Promise.resolve(fontsReady).then(runOpening).catch(dismiss);
-      }
+      const fontsReady = root.fonts?.ready ?? Promise.resolve();
+      void Promise.resolve(fontsReady).then(runOpening).catch(() => dismiss(false));
     }
   } catch {
-    dismiss();
+    dismiss(false);
   }
 
   return () => {

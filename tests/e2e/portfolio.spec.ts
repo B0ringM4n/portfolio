@@ -37,6 +37,40 @@ test('first visit announces completion and hard-dismisses the preloader', async 
   await expect(page.locator('html')).not.toHaveClass(/is-preloading/);
 });
 
+test('interrupted first visit does not persist preloader completion', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(document.fonts, 'ready', {
+      configurable: true,
+      get() {
+        return new Promise(() => {});
+      },
+    });
+  });
+  await page.goto('/');
+  await expect(page.locator('[data-preloader]')).toBeVisible();
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('editorial-portfolio:preloader-seen')),
+  ).toBeNull();
+
+  await page.goto('/projects/atlas-commerce/');
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('editorial-portfolio:preloader-seen')),
+  ).toBeNull();
+  await page.goto('/');
+  await expect(page.locator('[data-preloader]')).toBeVisible();
+});
+
+test('successful preloader completion persists only after dismissal', async ({ page }) => {
+  await page.goto('/');
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('editorial-portfolio:preloader-seen')),
+  ).toBeNull();
+  await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 2_500 });
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('editorial-portfolio:preloader-seen')),
+  ).toBe('true');
+});
+
 test('preloader storage failure dismisses safely without blocking navigation', async ({ page }) => {
   await page.addInitScript(() => {
     const nativeGetItem = Storage.prototype.getItem;
@@ -362,9 +396,12 @@ test('project covers preserve their complete natural artwork at desktop and mobi
 test('desktop keyboard order reaches the skip link and first navigation items', async ({ page }) => {
   await page.setViewportSize({ width: 1_440, height: 900 });
   await page.goto('/');
-  await expect(page.locator('[data-preloader]')).toBeHidden({
-    timeout: preloaderHardDeadlineWithSchedulerTolerance,
-  });
+  await expect
+    .poll(() => page.locator('[data-preloader]').isHidden(), {
+      timeout: preloaderHardDeadlineWithSchedulerTolerance,
+      intervals: [50],
+    })
+    .toBe(true);
 
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Saltar al contenido' })).toBeFocused();
@@ -604,6 +641,42 @@ test('standard motion enhances scrolling with one Lenis instance', async ({ page
   await expect(page.locator('html')).toHaveClass(/\blenis\b/);
 });
 
+test('hero opening keeps shell and scroll cue gated with the main composition', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(document.fonts, 'ready', {
+      configurable: true,
+      get() {
+        return new Promise(() => {});
+      },
+    });
+  });
+  await page.goto('/');
+  const opening = page.locator('[data-hero-opening]');
+  await expect(opening).toHaveCount(5);
+  await expect(page.locator('[data-preloader]')).toBeVisible();
+  for (const element of await opening.all()) {
+    await expect
+      .poll(() =>
+        element.evaluate((node) => Number.parseFloat(getComputedStyle(node).opacity)),
+      )
+      .toBeLessThan(0.1);
+  }
+
+  await expect
+    .poll(() => page.locator('[data-preloader]').isHidden(), {
+      timeout: preloaderHardDeadlineWithSchedulerTolerance,
+      intervals: [50],
+    })
+    .toBe(true);
+  for (const element of await opening.all()) {
+    await expect
+      .poll(() =>
+        element.evaluate((node) => Number.parseFloat(getComputedStyle(node).opacity)),
+      )
+      .toBeGreaterThan(0.9);
+  }
+});
+
 test('below-fold editorial reveals become visible on scroll', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 2_500 });
@@ -714,6 +787,8 @@ test('desktop navigation reaches a project and returns without duplicate shell',
   await projectCard.getByRole('link').click();
 
   await expect(page.locator('[data-project-hero]')).toBeVisible();
+  await expect(page.locator('[data-page-transition-cover]')).toHaveCount(1);
+  await expect(page.locator('html')).not.toHaveClass(/is-transitioning/);
   await expect(page.locator('[data-site-header]')).toHaveCount(1);
   await expect(page.locator('[data-site-footer]')).toHaveCount(1);
   await expect
@@ -757,19 +832,40 @@ test('mobile menu traps focus, marks content inert, and restores focus', async (
   await trigger.click();
 
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('main')).toHaveAttribute('inert', '');
+  for (const background of await page.locator('[data-menu-background]').all()) {
+    await expect(background).toHaveAttribute('inert', '');
+  }
   await expect(links.first()).toBeFocused();
 
-  await links.last().focus();
+  const close = panel.getByRole('button', { name: 'Cerrar menú' });
+  await close.focus();
   await page.keyboard.press('Tab');
   await expect(links.first()).toBeFocused();
   await page.keyboard.press('Shift+Tab');
-  await expect(links.last()).toBeFocused();
+  await expect(close).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+  for (const background of await page.locator('[data-menu-background]').all()) {
+    await expect(background).not.toHaveAttribute('inert', '');
+  }
+});
+
+test('mobile menu has a pointer-operable close control with correct state', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 3_000 });
+
+  const trigger = page.locator('[data-menu-toggle]');
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-label', 'Menú abierto');
+  const close = page.locator('[data-menu-close]');
+  await expect(close).toBeVisible();
+  await close.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(trigger).toHaveAttribute('aria-label', 'Abrir menú');
+  await expect(page.locator('[data-menu-panel]')).toBeHidden();
 });
 
 test('mobile menu navigation cleans state and remains usable across repeated swaps', async ({ page }) => {

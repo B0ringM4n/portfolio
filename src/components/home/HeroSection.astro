@@ -5,14 +5,15 @@ import type { SiteData } from '@/types/site';
 interface Props {
   hero: SiteData['hero'];
   identity: SiteData['identity'];
+  copy: SiteData['copy'];
 }
 
-const { hero, identity } = Astro.props;
+const { hero, identity, copy } = Astro.props;
 ---
 
 <section id="hero" class="hero-section" aria-labelledby="hero-title">
   <div class="home-frame hero-section__grid">
-    <p class="hero-section__eyebrow" data-reveal>{hero.eyebrow}</p>
+    <p class="hero-section__eyebrow" data-hero-opening="eyebrow">{hero.eyebrow}</p>
 
     <div class="hero-section__decoration" aria-hidden="true" data-hero-decoration-owner>
       <GradientSphere />
@@ -28,8 +29,8 @@ const { hero, identity } = Astro.props;
       }
     </h1>
 
-    <p class="hero-section__role" data-reveal>{identity.role}</p>
-    <p class="hero-section__availability" data-reveal>{identity.availability}</p>
-    <a class="hero-section__scroll" href="#statement" data-magnetic>SCROLL ↓</a>
+    <p class="hero-section__role" data-hero-opening="role">{identity.role}</p>
+    <p class="hero-section__availability" data-hero-opening="availability">{identity.availability}</p>
+    <a class="hero-section__scroll" href="#statement" data-hero-opening="scroll" data-magnetic>{copy.heroScroll}</a>
   </div>
 </section>

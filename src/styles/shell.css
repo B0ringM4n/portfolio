@@ -105,6 +105,21 @@
   line-height: 1;
 }
 
+.site-header__menu-close {
+  position: absolute;
+  inset-block-start: var(--gutter);
+  inset-inline-end: var(--gutter);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 5.5rem;
+  min-block-size: 2.75rem;
+  border-radius: var(--interactive-radius);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  cursor: pointer;
+}
+
 .site-footer {
   border-block-start: var(--hairline);
 }
@@ -118,7 +133,7 @@
 
 .site-footer__identity,
 .site-footer__meta {
-  color: var(--color-ash);
+  color: var(--color-muted);
   font-size: var(--font-size-label);
   letter-spacing: 0.03em;
 }
@@ -154,7 +169,7 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  color: var(--color-ash);
+  color: var(--color-muted);
   font-size: var(--font-size-label);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -173,14 +188,14 @@
   display: grid;
   place-items: center;
   aspect-ratio: 1;
-  color: var(--color-ash);
+  --ring-color: var(--color-ash);
 }
 
 .concentric-rings::before,
 .concentric-rings::after,
 .concentric-rings span {
   position: absolute;
-  border: 1px solid currentColor;
+  border: 1px solid var(--ring-color);
   border-radius: 50%;
   content: '';
 }
@@ -198,6 +213,25 @@
 .concentric-rings span {
   inline-size: 33.333%;
   block-size: 33.333%;
+}
+
+.page-transition-cover {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  background: var(--color-ink);
+  pointer-events: none;
+  transform: translateY(100%);
+  visibility: hidden;
+  transition:
+    transform 300ms cubic-bezier(0.76, 0, 0.24, 1),
+    visibility 0s linear 300ms;
+}
+
+.is-transitioning .page-transition-cover {
+  transform: translateY(0);
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .preloader {
@@ -261,5 +295,11 @@
   .site-footer__nav,
   .site-footer__socials {
     flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-cover {
+    transition: none;
   }
 }

@@ -10,9 +10,10 @@
     "build": "astro build",
     "capture:visual": "env -u NO_COLOR -u FORCE_COLOR node scripts/capture-visual-audit.mjs",
     "test": "vitest run",
+    "test:output": "node --test tests/*.test.mjs",
     "test:e2e": "npm run build && env -u NO_COLOR -u FORCE_COLOR playwright test",
     "verify:production": "node scripts/verify-production.mjs",
-    "verify": "npm run check && npm test && npm run build && npm run verify:production"
+    "verify": "npm run check && npm test && npm run build && npm run test:output && npm run verify:production"
   },
   "dependencies": {
     "@fontsource-variable/instrument-sans": "latest",

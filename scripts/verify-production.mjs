@@ -63,7 +63,7 @@ assert.equal(
 for (const [hook, expected] of [
   ['data-hero-line', 3],
   ['data-sphere', 1],
-  ['data-reveal', 32],
+  ['data-reveal', 29],
   ['data-parallax', 3],
   ['data-magnetic', 6],
 ]) {

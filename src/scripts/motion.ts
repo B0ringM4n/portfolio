@@ -73,6 +73,9 @@ export function setupMotion(root: Document = document): Cleanup {
     context = gsap.context(() => {}, documentElement);
     context.add(() => {
       const heroLines = Array.from(root.querySelectorAll<HTMLElement>('[data-hero-line]'));
+      const openingItems = Array.from(
+        root.querySelectorAll<HTMLElement>('[data-hero-opening]'),
+      );
       const sphere = root.querySelector<HTMLElement>('[data-sphere]');
       const opening = gsap.timeline({ paused: true });
 
@@ -104,6 +107,21 @@ export function setupMotion(root: Document = document): Cleanup {
           { yPercent: 110 },
           { yPercent: 0, duration: 0.9, stagger: 0.08, ease: 'power3.out' },
           0.08,
+        );
+      }
+
+      if (openingItems.length > 0) {
+        opening.fromTo(
+          openingItems,
+          { opacity: 0, y: 18 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.72,
+            stagger: 0.055,
+            ease: 'power3.out',
+          },
+          0.04,
         );
       }
 

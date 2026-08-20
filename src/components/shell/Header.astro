@@ -1,17 +1,18 @@
 ---
-import type { NavItem } from '@/types/site';
+import type { NavItem, SiteData } from '@/types/site';
 
 interface Props {
   name: string;
   availability: string;
   navigation: NavItem[];
+  copy: SiteData['copy'];
 }
 
-const { name, availability, navigation } = Astro.props;
+const { name, availability, navigation, copy } = Astro.props;
 ---
 
 <header class="site-header" data-site-header>
-  <div class="site-header__inner">
+  <div class="site-header__inner" data-menu-background data-hero-opening="header">
     <a class="site-header__identity" href="/" aria-label={`${name}, inicio`}>{name}</a>
 
     <nav class="site-header__nav" aria-label="Navegación principal">
@@ -23,12 +24,13 @@ const { name, availability, navigation } = Astro.props;
       <button
         class="site-header__menu-toggle"
         type="button"
-        aria-label="Abrir menú"
+        aria-label={copy.menuOpenLabel}
         aria-expanded="false"
         aria-controls="mobile-menu"
         data-menu-toggle
+        data-menu-open-label={copy.menuOpenStateLabel}
       >
-        Menú
+        {copy.menuText}
       </button>
     </div>
 
@@ -48,5 +50,13 @@ const { name, availability, navigation } = Astro.props;
     hidden
   >
     {navigation.map(({ label, href }) => <a href={href}>{label}</a>)}
+    <button
+      class="site-header__menu-close"
+      type="button"
+      aria-label={copy.menuCloseLabel}
+      data-menu-close
+    >
+      {copy.menuCloseLabel}
+    </button>
   </nav>
 </header>

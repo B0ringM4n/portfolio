@@ -15,11 +15,11 @@ const projects = await getProjects();
 ---
 
 <BaseLayout title={siteData.seo.title} description={siteData.seo.description}>
-  <HeroSection hero={siteData.hero} identity={siteData.identity} />
-  <StatementSection statement={siteData.statement} />
-  <AboutSection about={siteData.about} email={siteData.contact.email} />
-  <TechWallSection technologies={siteData.technologies} />
-  <ProjectsSection projects={projects} />
-  <CapabilitiesSection capabilities={siteData.capabilities} />
+  <HeroSection hero={siteData.hero} identity={siteData.identity} copy={siteData.copy} />
+  <StatementSection statement={siteData.statement} heading={siteData.copy.statementHeading} />
+  <AboutSection about={siteData.about} email={siteData.contact.email} contactCta={siteData.copy.aboutContactCta} />
+  <TechWallSection technologies={siteData.technologies} copy={siteData.copy} />
+  <ProjectsSection projects={projects} copy={siteData.copy} />
+  <CapabilitiesSection capabilities={siteData.capabilities} label={siteData.copy.capabilitiesLabel} />
   <ContactSection slot="contact" contact={siteData.contact} />
 </BaseLayout>

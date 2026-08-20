@@ -1,20 +1,24 @@
 ---
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
+import type { SiteData } from '@/types/site';
 
 interface Props {
   project: CollectionEntry<'projects'>;
   index: number;
+  copy: SiteData['copy'];
 }
 
-const { project, index } = Astro.props;
+const { project, index, copy } = Astro.props;
 const { title, summary, year, capabilities, cover, coverAlt } = project.data;
 const projectNumber = String(index + 1).padStart(2, '0');
+const mediaRatios = ['landscape', 'editorial', 'cinematic'] as const;
+const mediaRatio = mediaRatios[index % mediaRatios.length];
 ---
 
 <article id={`project-${project.id}`} class="project-card" data-project-card data-reveal>
-  <a class="project-card__link" href={`/projects/${project.id}/`} aria-label={`Ver proyecto ${title}`} data-magnetic>
-    <div class="project-card__media">
+  <a class="project-card__link" href={`/projects/${project.id}/`} aria-label={`${copy.projectLinkLabelPrefix} ${title}`} data-magnetic>
+    <div class:list={['project-card__media', `project-card__media--${mediaRatio}`]} data-media-ratio={mediaRatio}>
       <div class="project-card__artwork" data-parallax>
         <Image
           src={cover}
@@ -44,7 +48,7 @@ const projectNumber = String(index + 1).padStart(2, '0');
       <p class="project-card__summary">{summary}</p>
       <div class="project-card__meta">
         <p>{year}</p>
-        <ul aria-label="Capacidades del proyecto">
+        <ul aria-label={copy.projectCapabilitiesLabel}>
           {capabilities.map((capability) => <li>{capability}</li>)}
         </ul>
       </div>
