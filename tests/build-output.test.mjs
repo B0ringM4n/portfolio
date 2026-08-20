@@ -5,9 +5,11 @@ import test from 'node:test';
 const home = () => readFileSync('dist/index.html', 'utf8');
 
 const homeStyles = () => {
-  const stylesheetHref = home().match(/<link rel="stylesheet" href="([^"]+\.css)"/)?.[1];
-  assert.ok(stylesheetHref, 'home stylesheet is missing');
-  return readFileSync(`dist${stylesheetHref}`, 'utf8');
+  const stylesheetHrefs = [...home().matchAll(/<link rel="stylesheet" href="([^"]+\.css)"/g)].map(
+    ([, href]) => href,
+  );
+  assert.ok(stylesheetHrefs.length > 0, 'home stylesheet is missing');
+  return stylesheetHrefs.map((href) => readFileSync(`dist${href}`, 'utf8')).join('\n');
 };
 
 test('home exposes semantic shell and no-JavaScript navigation', () => {
@@ -29,6 +31,28 @@ test('landing renders the complete approved narrative flow', () => {
   assert.equal((html.match(/data-tech-cell/g) ?? []).length, 10);
   assert.equal((html.match(/data-gradient-sphere/g) ?? []).length, 1);
   assert.match(html, /mailto:hello@alexrivera\.dev/);
+});
+
+test('every sample project builds a complete detail route', () => {
+  for (const slug of ['atlas-commerce', 'mono-culture', 'nexo-finance']) {
+    const html = readFileSync(`dist/projects/${slug}/index.html`, 'utf8');
+    assert.match(html, /data-project-hero/);
+    assert.match(html, /data-project-question/);
+    assert.match(html, /data-project-objective/);
+    assert.match(html, /data-project-strategy/);
+    assert.match(html, /data-project-outcome/);
+    assert.ok((html.match(/data-gallery-item/g) ?? []).length >= 3);
+    assert.ok((html.match(/data-related-project/g) ?? []).length <= 3);
+  }
+});
+
+test('404 output keeps the branded shell without a decorative sphere', () => {
+  const html = readFileSync('dist/404.html', 'utf8');
+  assert.match(html, /<header[^>]*data-site-header/);
+  assert.match(html, /<footer[^>]*data-site-footer/);
+  assert.match(html, /<h1[^>]*>Esta página no está aquí\.<\/h1>/);
+  assert.match(html, /<a href="\/">Volver al inicio ↗<\/a>/);
+  assert.doesNotMatch(html, /data-gradient-sphere/);
 });
 
 test('statement exposes real assistive text beside its decorative line rendering', () => {

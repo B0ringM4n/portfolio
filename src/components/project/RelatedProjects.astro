@@ -1,0 +1,40 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  projects: CollectionEntry<'projects'>[];
+}
+
+const { projects } = Astro.props;
+const relatedProjects = projects.slice(0, 3);
+---
+
+{
+  relatedProjects.length > 0 && (
+    <section class="related-projects project-frame" aria-labelledby="related-projects-title">
+      <h2 id="related-projects-title">Otros proyectos</h2>
+      <div class="related-projects__grid">
+        {relatedProjects.map((project) => (
+          <article class="related-project" data-related-project>
+            <a href={`/projects/${project.id}/`} aria-label={`Ver proyecto ${project.data.title}`}>
+              <div class="related-project__media">
+                <Image
+                  src={project.data.cover}
+                  alt={project.data.coverAlt}
+                  widths={[400, 640, 800]}
+                  sizes="(max-width: 699px) calc(100vw - 2rem), (max-width: 1439px) calc((100vw - 8rem) / 3), 450px"
+                  loading="lazy"
+                />
+              </div>
+              <div class="related-project__content">
+                <h3>{project.data.title}</h3>
+                <p>{project.data.capabilities[0]} · {project.data.year}</p>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}

@@ -1,0 +1,21 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ProjectLayout from '@/layouts/ProjectLayout.astro';
+import { getProjects, getRelatedProjects } from '@/lib/projects';
+
+export async function getStaticPaths() {
+  return (await getProjects()).map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const relatedProjects = await getRelatedProjects(project);
+---
+
+<ProjectLayout project={project} relatedProjects={relatedProjects} />

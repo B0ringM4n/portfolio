@@ -1,0 +1,34 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ContactSection from '@/components/home/ContactSection.astro';
+import ProjectGallery from '@/components/project/ProjectGallery.astro';
+import ProjectHero from '@/components/project/ProjectHero.astro';
+import ProjectNarrative from '@/components/project/ProjectNarrative.astro';
+import RelatedProjects from '@/components/project/RelatedProjects.astro';
+import { siteData } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/project.css';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  relatedProjects: CollectionEntry<'projects'>[];
+}
+
+const { project, relatedProjects } = Astro.props;
+const { title, summary, question, objective, strategy, outcome, gallery } = project.data;
+---
+
+<BaseLayout
+  title={`${title} — ${siteData.identity.name}`}
+  description={summary}
+  canonicalPath={`/projects/${project.id}/`}
+>
+  <article class="project-detail">
+    <ProjectHero project={project} />
+    <ProjectNarrative question={question} objective={objective} strategy={strategy} outcome={outcome}>
+      <ProjectGallery slot="gallery" gallery={gallery} />
+    </ProjectNarrative>
+  </article>
+  <RelatedProjects projects={relatedProjects} />
+  <ContactSection slot="contact" contact={siteData.contact} />
+</BaseLayout>
