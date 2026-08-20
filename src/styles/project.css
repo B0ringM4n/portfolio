@@ -239,12 +239,11 @@
 
 .related-project__media img {
   object-fit: cover;
-  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.related-project a:hover .related-project__media img,
-.related-project a:focus-visible .related-project__media img {
-  transform: scale(1.025);
+.related-project a:hover .related-project__content h3,
+.related-project a:focus-visible .related-project__content h3 {
+  text-decoration: underline;
 }
 
 .related-project__content {
@@ -466,11 +465,5 @@
   .contact-section__email {
     justify-self: start;
     font-size: clamp(1.25rem, 6.5vw, 2rem);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .related-project__media img {
-    transition: none;
   }
 }

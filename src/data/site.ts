@@ -13,9 +13,9 @@ export const siteData = {
     description: 'Portafolio de Alex Rivera, creative developer en Cancún, México.',
   },
   navigation: [
-    { label: 'Proyectos', href: '#proyectos' },
-    { label: 'Perfil', href: '#perfil' },
-    { label: 'Contacto', href: '#contacto' },
+    { label: 'Proyectos', href: '/#projects' },
+    { label: 'Perfil', href: '/#about' },
+    { label: 'Contacto', href: '/#contact' },
   ],
   hero: {
     eyebrow: 'Portfolio 2026',

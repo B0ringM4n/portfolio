@@ -12,16 +12,6 @@ interface Props {
 
 const { name, location, timezone, availability, navigation, socials } = Astro.props;
 const year = new Date().getFullYear();
-
-const anchorHref = (href: string) => {
-  const anchorMap: Record<string, string> = {
-    '#proyectos': '#projects',
-    '#perfil': '#about',
-    '#contacto': '#contact',
-  };
-
-  return anchorMap[href] ?? href;
-};
 ---
 
 <footer class="site-footer" data-site-footer>
@@ -35,7 +25,7 @@ const anchorHref = (href: string) => {
 
     <div class="site-footer__links">
       <nav class="site-footer__nav" aria-label="Navegación del pie">
-        {navigation.map(({ label, href }) => <a href={anchorHref(href)}>{label}</a>)}
+        {navigation.map(({ label, href }) => <a href={href}>{label}</a>)}
       </nav>
       <nav class="site-footer__socials" aria-label="Redes sociales">
         {

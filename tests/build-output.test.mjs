@@ -4,13 +4,15 @@ import test from 'node:test';
 
 const home = () => readFileSync('dist/index.html', 'utf8');
 
-const homeStyles = () => {
-  const stylesheetHrefs = [...home().matchAll(/<link rel="stylesheet" href="([^"]+\.css)"/g)].map(
+const pageStyles = (html) => {
+  const stylesheetHrefs = [...html.matchAll(/<link rel="stylesheet" href="([^"]+\.css)"/g)].map(
     ([, href]) => href,
   );
-  assert.ok(stylesheetHrefs.length > 0, 'home stylesheet is missing');
+  assert.ok(stylesheetHrefs.length > 0, 'page stylesheet is missing');
   return stylesheetHrefs.map((href) => readFileSync(`dist${href}`, 'utf8')).join('\n');
 };
+
+const homeStyles = () => pageStyles(home());
 
 test('home exposes semantic shell and no-JavaScript navigation', () => {
   const html = home();
@@ -18,8 +20,8 @@ test('home exposes semantic shell and no-JavaScript navigation', () => {
   assert.match(html, /<header[^>]*data-site-header/);
   assert.match(html, /<main[^>]*id="main-content"/);
   assert.match(html, /<footer[^>]*data-site-footer/);
-  assert.match(html, /href="#projects"/);
-  assert.match(html, /href="#contact"/);
+  assert.match(html, /href="\/#projects"/);
+  assert.match(html, /href="\/#contact"/);
 });
 
 test('landing renders the complete approved narrative flow', () => {
@@ -53,6 +55,28 @@ test('404 output keeps the branded shell without a decorative sphere', () => {
   assert.match(html, /<h1[^>]*>Esta página no está aquí\.<\/h1>/);
   assert.match(html, /<a href="\/">Volver al inicio ↗<\/a>/);
   assert.doesNotMatch(html, /data-gradient-sphere/);
+});
+
+test('non-home shell navigation returns to canonical home sections', () => {
+  for (const file of [
+    'dist/projects/atlas-commerce/index.html',
+    'dist/projects/mono-culture/index.html',
+    'dist/projects/nexo-finance/index.html',
+    'dist/404.html',
+  ]) {
+    const html = readFileSync(file, 'utf8');
+    for (const id of ['about', 'projects', 'contact']) {
+      assert.match(html, new RegExp(`href="/#${id}"`));
+    }
+    assert.doesNotMatch(html, /href="#(?:about|projects|contact)"/);
+  }
+});
+
+test('related project links remain a static non-motion affordance', () => {
+  const html = readFileSync('dist/projects/atlas-commerce/index.html', 'utf8');
+  const css = pageStyles(html);
+  assert.doesNotMatch(css, /\.related-project__media img\{[^}]*transition:/);
+  assert.doesNotMatch(css, /\.related-project[^}]*\{(?:transform:|[^}]*;transform:)/);
 });
 
 test('statement exposes real assistive text beside its decorative line rendering', () => {
