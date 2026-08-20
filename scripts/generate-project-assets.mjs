@@ -21,25 +21,38 @@ const escapeXml = (value) => value.replace(/[&<>"']/g, (character) => ({
 
 export function renderFrame(project, index, width, height) {
   const [base, accent, paper] = project.tones;
+  const frameLayouts = [
+    { panelX: 0.055, panelY: 0.19, panelWidth: 0.69, panelHeight: 0.62, smallX: 0.09, smallY: 0.15, smallWidth: 0.49, smallHeight: 0.46, productX: 0.62, productY: 0.22, productSize: 0.29, columns: 10, rows: 7 },
+    { panelX: 0.13, panelY: 0.15, panelWidth: 0.58, panelHeight: 0.68, smallX: 0.1, smallY: 0.16, smallWidth: 0.44, smallHeight: 0.53, productX: 0.61, productY: 0.18, productSize: 0.33, columns: 8, rows: 8 },
+    { panelX: 0.055, panelY: 0.12, panelWidth: 0.76, panelHeight: 0.58, smallX: 0.08, smallY: 0.22, smallWidth: 0.58, smallHeight: 0.39, productX: 0.69, productY: 0.16, productSize: 0.25, columns: 12, rows: 6 },
+    { panelX: 0.28, panelY: 0.2, panelWidth: 0.54, panelHeight: 0.61, smallX: 0.11, smallY: 0.13, smallWidth: 0.42, smallHeight: 0.58, productX: 0.58, productY: 0.3, productSize: 0.31, columns: 9, rows: 9 },
+  ];
+  const layout = frameLayouts[index] ?? frameLayouts[0];
   const gutter = Math.round(width * 0.055);
-  const panelX = gutter + ((index % 2) * Math.round(width * 0.075));
-  const panelY = Math.round(height * (index === 0 ? 0.19 : 0.15));
-  const panelWidth = Math.round(width * (index === 0 ? 0.69 : 0.58));
-  const panelHeight = Math.round(height * (index === 0 ? 0.62 : 0.68));
-  const smallPanelX = panelX + Math.round(panelWidth * 0.09);
-  const smallPanelY = panelY + Math.round(panelHeight * 0.15);
-  const smallPanelWidth = Math.round(panelWidth * 0.49);
-  const smallPanelHeight = Math.round(panelHeight * 0.46);
-  const productX = panelX + Math.round(panelWidth * 0.62);
-  const productY = panelY + Math.round(panelHeight * 0.22);
-  const productSize = Math.round(Math.min(panelWidth, panelHeight) * 0.29);
-  const gridX = Array.from({ length: 10 }, (_, column) => gutter + column * ((width - gutter * 2) / 9));
-  const gridY = Array.from({ length: 7 }, (_, row) => gutter + row * ((height - gutter * 2) / 6));
+  const panelX = Math.round(width * layout.panelX);
+  const panelY = Math.round(height * layout.panelY);
+  const panelWidth = Math.round(width * layout.panelWidth);
+  const panelHeight = Math.round(height * layout.panelHeight);
+  const smallPanelX = panelX + Math.round(panelWidth * layout.smallX);
+  const smallPanelY = panelY + Math.round(panelHeight * layout.smallY);
+  const smallPanelWidth = Math.round(panelWidth * layout.smallWidth);
+  const smallPanelHeight = Math.round(panelHeight * layout.smallHeight);
+  const productX = panelX + Math.round(panelWidth * layout.productX);
+  const productY = panelY + Math.round(panelHeight * layout.productY);
+  const productSize = Math.round(Math.min(panelWidth, panelHeight) * layout.productSize);
+  const gridX = Array.from({ length: layout.columns }, (_, column) => gutter + column * ((width - gutter * 2) / (layout.columns - 1)));
+  const gridY = Array.from({ length: layout.rows }, (_, row) => gutter + row * ((height - gutter * 2) / (layout.rows - 1)));
   const gridLines = [
     ...gridX.map((x) => `<line x1="${x}" y1="${gutter}" x2="${x}" y2="${height - gutter}" />`),
     ...gridY.map((y) => `<line x1="${gutter}" y1="${y}" x2="${width - gutter}" y2="${y}" />`),
   ].join('');
   const label = escapeXml(project.label);
+  const productMark = [
+    `<circle cx="${productX + productSize / 2}" cy="${productY + productSize / 2}" r="${productSize / 2}" fill="${accent}"/><path d="M ${productX + productSize * 0.26} ${productY + productSize * 0.58} C ${productX + productSize * 0.44} ${productY + productSize * 0.18}, ${productX + productSize * 0.7} ${productY + productSize * 0.24}, ${productX + productSize * 0.76} ${productY + productSize * 0.55}" fill="none" stroke="${base}" stroke-width="${Math.max(7, Math.round(width * 0.008))}" stroke-linecap="round"/>`,
+    `<rect x="${productX}" y="${productY}" width="${productSize}" height="${productSize}" rx="${Math.round(productSize * 0.18)}" fill="${accent}"/><path d="M ${productX + productSize * 0.2} ${productY + productSize * 0.72} L ${productX + productSize * 0.45} ${productY + productSize * 0.32} L ${productX + productSize * 0.77} ${productY + productSize * 0.63}" fill="none" stroke="${base}" stroke-width="${Math.max(7, Math.round(width * 0.008))}" stroke-linecap="square"/>`,
+    `<path d="M ${productX + productSize / 2} ${productY} L ${productX + productSize} ${productY + productSize / 2} L ${productX + productSize / 2} ${productY + productSize} L ${productX} ${productY + productSize / 2} Z" fill="${accent}"/><circle cx="${productX + productSize / 2}" cy="${productY + productSize / 2}" r="${Math.round(productSize * 0.18)}" fill="${base}"/>`,
+    `<path d="M ${productX + productSize / 2} ${productY} A ${productSize / 2} ${productSize / 2} 0 1 1 ${productX} ${productY + productSize / 2} L ${productX + productSize / 2} ${productY + productSize / 2} Z" fill="${accent}"/><path d="M ${productX + productSize * 0.2} ${productY + productSize * 0.8} H ${productX + productSize * 0.8}" stroke="${base}" stroke-width="${Math.max(7, Math.round(width * 0.008))}"/>`,
+  ][index] ?? '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title description">
   <title id="title">${label}</title>
@@ -54,8 +67,7 @@ export function renderFrame(project, index, width, height) {
   <rect x="${smallPanelX + Math.round(smallPanelWidth * 0.1)}" y="${smallPanelY + Math.round(smallPanelHeight * 0.12)}" width="${Math.round(smallPanelWidth * 0.5)}" height="${Math.round(smallPanelHeight * 0.06)}" fill="${accent}"/>
   <rect x="${smallPanelX + Math.round(smallPanelWidth * 0.1)}" y="${smallPanelY + Math.round(smallPanelHeight * 0.28)}" width="${Math.round(smallPanelWidth * 0.74)}" height="${Math.round(smallPanelHeight * 0.025)}" fill="${paper}" fill-opacity="0.8"/>
   <rect x="${smallPanelX + Math.round(smallPanelWidth * 0.1)}" y="${smallPanelY + Math.round(smallPanelHeight * 0.39)}" width="${Math.round(smallPanelWidth * 0.62)}" height="${Math.round(smallPanelHeight * 0.025)}" fill="${paper}" fill-opacity="0.5"/>
-  <circle cx="${productX + productSize / 2}" cy="${productY + productSize / 2}" r="${productSize / 2}" fill="${accent}"/>
-  <path d="M ${productX + productSize * 0.26} ${productY + productSize * 0.58} C ${productX + productSize * 0.44} ${productY + productSize * 0.18}, ${productX + productSize * 0.7} ${productY + productSize * 0.24}, ${productX + productSize * 0.76} ${productY + productSize * 0.55}" fill="none" stroke="${base}" stroke-width="${Math.max(7, Math.round(width * 0.008))}" stroke-linecap="round"/>
+  ${productMark}
   <rect x="${productX}" y="${productY + Math.round(productSize * 1.18)}" width="${Math.round(productSize * 0.82)}" height="${Math.round(productSize * 0.11)}" fill="${base}"/>
   <text x="${gutter}" y="${height - gutter}" fill="${paper}" font-family="Arial, sans-serif" font-size="${Math.max(24, Math.round(width * 0.024))}" font-weight="700" letter-spacing="2">${label}</text>
 </svg>`;
