@@ -25,7 +25,7 @@ const projects = defineCollection({
     objective: z.string().trim().min(1),
     strategy: z.string().trim().min(1),
     outcome: z.string().trim().min(1),
-    externalUrl: z.string().url().optional(),
+    externalUrl: z.url().optional(),
     gallery: z.array(galleryItem(image)).min(3),
   }),
 });
