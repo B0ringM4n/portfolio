@@ -1,0 +1,54 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Header from '@/components/shell/Header.astro';
+import Footer from '@/components/shell/Footer.astro';
+import Preloader from '@/components/shell/Preloader.astro';
+import { siteData } from '@/data/site';
+import '@fontsource-variable/instrument-sans/wght.css';
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/shell.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string;
+}
+
+const { title, description, canonicalPath = Astro.url.pathname } = Astro.props;
+const canonical = Astro.site ? new URL(canonicalPath, Astro.site) : undefined;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#e5e4e0" />
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <title>{title}</title>
+    <ClientRouter fallback="swap" />
+  </head>
+  <body>
+    <Preloader />
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <Header
+      name={siteData.identity.name}
+      availability={siteData.identity.availability}
+      navigation={siteData.navigation}
+    />
+    <main id="main-content">
+      <slot />
+    </main>
+    <slot name="contact" />
+    <Footer
+      name={siteData.identity.name}
+      location={siteData.identity.location}
+      timezone={siteData.identity.timezone}
+      availability={siteData.identity.availability}
+      navigation={siteData.navigation}
+      socials={siteData.socials}
+    />
+  </body>
+</html>

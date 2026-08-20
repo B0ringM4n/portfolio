@@ -1,3 +1,8 @@
-<main>
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteData } from '@/data/site';
+---
+
+<BaseLayout title={siteData.seo.title} description={siteData.seo.description}>
   <h1>Editorial portfolio</h1>
-</main>
+</BaseLayout>

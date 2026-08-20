@@ -1,0 +1,62 @@
+---
+import type { NavItem } from '@/types/site';
+
+interface Props {
+  name: string;
+  availability: string;
+  navigation: NavItem[];
+}
+
+const { name, availability, navigation } = Astro.props;
+
+const anchorHref = (href: string) => {
+  const anchorMap: Record<string, string> = {
+    '#proyectos': '#projects',
+    '#perfil': '#about',
+    '#contacto': '#contact',
+  };
+
+  return anchorMap[href] ?? href;
+};
+---
+
+<header class="site-header" data-site-header>
+  <div class="site-header__inner">
+    <a class="site-header__identity" href="/" aria-label={`${name}, inicio`}>{name}</a>
+
+    <nav class="site-header__nav" aria-label="Navegación principal">
+      {navigation.map(({ label, href }) => <a href={anchorHref(href)}>{label}</a>)}
+    </nav>
+
+    <div class="site-header__actions">
+      <a class="site-header__availability" href="#contact">{availability}</a>
+      <button
+        class="site-header__menu-toggle"
+        type="button"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        data-menu-toggle
+      >
+        Menú
+      </button>
+    </div>
+
+    <nav class="site-header__mobile-fallback" aria-label="Navegación de secciones">
+      {navigation.map(({ label, href }) => <a href={anchorHref(href)}>{label}</a>)}
+    </nav>
+  </div>
+
+  <nav
+    id="mobile-menu"
+    class="site-header__mobile-panel"
+    aria-label="Menú móvil"
+    aria-modal="true"
+    role="dialog"
+    tabindex="-1"
+    data-menu-panel
+    hidden
+  >
+    {navigation.map(({ label, href }) => <a href={anchorHref(href)}>{label}</a>)}
+  </nav>
+</header>

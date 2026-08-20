@@ -1,0 +1,20 @@
+:root {
+  --color-canvas: #e5e4e0;
+  --color-ink: #1d1d1d;
+  --color-paper: #ffffff;
+  --color-ash: #bfbebe;
+  --color-stone: #cdcdc9;
+  --gradient-sphere: linear-gradient(255deg, rgb(250, 203, 14), rgb(240, 107, 168) 30%, rgb(120, 186, 230) 65%, rgb(255, 255, 255));
+
+  --font-primary: 'Instrument Sans Variable', 'Instrument Sans', sans-serif;
+  --font-size-display: clamp(4.75rem, 9vw, 9.375rem);
+  --font-size-heading: clamp(2.5rem, 5vw, 5rem);
+  --font-size-body: clamp(0.9375rem, 0.9rem + 0.2vw, 1.125rem);
+  --font-size-label: 0.6875rem;
+
+  --content-max-width: 87.5rem;
+  --gutter: clamp(1rem, 2.5vw, 2.5rem);
+  --section-space: clamp(4.75rem, 6vw + 2rem, 7.4375rem);
+  --interactive-radius: 0.625rem;
+  --hairline: 1px solid var(--color-ash);
+}
