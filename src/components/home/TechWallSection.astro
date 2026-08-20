@@ -1,0 +1,29 @@
+---
+import type { Technology } from '@/types/site';
+
+interface Props {
+  technologies: Technology[];
+}
+
+const { technologies } = Astro.props;
+---
+
+<section id="stack" class="tech-wall-section" aria-labelledby="stack-title">
+  <div class="home-frame">
+    <h2 id="stack-title" class="tech-wall-section__title" data-reveal>Tecnologías con las que construyo</h2>
+
+    <ul class="tech-wall-section__grid">
+      {
+        technologies.map(({ name, category, mark }) => (
+          <li class="tech-wall-section__cell" data-tech-cell data-reveal>
+            <img src={`/marks/${mark}.svg`} alt={`Marca de ${name}`} width="96" height="96" loading="lazy" />
+            <div class="tech-wall-section__meta">
+              <h3>{name}</h3>
+              <p>{category}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

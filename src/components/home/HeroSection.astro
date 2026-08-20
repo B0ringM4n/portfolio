@@ -1,0 +1,33 @@
+---
+import GradientSphere from '@/components/decor/GradientSphere.astro';
+import type { SiteData } from '@/types/site';
+
+interface Props {
+  hero: SiteData['hero'];
+  identity: SiteData['identity'];
+}
+
+const { hero, identity } = Astro.props;
+---
+
+<section id="hero" class="hero-section" aria-labelledby="hero-title">
+  <div class="home-frame hero-section__grid">
+    <p class="hero-section__eyebrow" data-reveal>{hero.eyebrow}</p>
+
+    <GradientSphere />
+
+    <h1 id="hero-title" class="hero-section__title">
+      {
+        hero.lines.map((line) => (
+          <span class="hero-section__line-mask">
+            <span data-hero-line>{line}</span>
+          </span>
+        ))
+      }
+    </h1>
+
+    <p class="hero-section__role" data-reveal>{identity.role}</p>
+    <p class="hero-section__availability" data-reveal>{identity.availability}</p>
+    <a class="hero-section__scroll" href="#statement" data-magnetic>SCROLL ↓</a>
+  </div>
+</section>

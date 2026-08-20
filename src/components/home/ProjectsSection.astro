@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ProjectCard from '@/components/home/ProjectCard.astro';
+
+interface Props {
+  projects: CollectionEntry<'projects'>[];
+}
+
+const { projects } = Astro.props;
+const projectCount = String(projects.length).padStart(2, '0');
+const firstProjectId = projects[0] ? `#project-${projects[0].id}` : '#contact';
+---
+
+<section id="projects" class="projects-section" aria-labelledby="projects-title">
+  <div class="home-frame projects-section__heading">
+    <h2 id="projects-title" data-reveal>Proyectos seleccionados</h2>
+    <p class="projects-section__count" aria-label={`${projects.length} proyectos`}>{projectCount}</p>
+    <a class="projects-section__jump" href={firstProjectId} data-magnetic>VIEW PROJECTS ↓</a>
+  </div>
+
+  <div class="home-frame projects-section__list">
+    {projects.map((project, index) => <ProjectCard project={project} index={index} />)}
+  </div>
+</section>
