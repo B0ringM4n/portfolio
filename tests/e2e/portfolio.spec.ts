@@ -65,8 +65,7 @@ test('preloader font readiness failure dismisses safely', async ({ page }) => {
 
 test(
   'preloader hard-dismisses when font readiness never settles',
-  async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name.includes('mobile'), 'The hard deadline is viewport-independent.');
+  async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(document.fonts, 'ready', {
         configurable: true,
@@ -107,6 +106,179 @@ test('one failed enhancement does not prevent mobile menu setup', async ({ page 
   await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 1_000 });
   await expect(page.locator('[data-preloader-status]')).toHaveText('Contenido listo');
   const trigger = page.locator('[data-menu-toggle]');
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('late motion setup failure rolls back Lenis, listeners, and enhancement state', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const activeWheelListeners = new Set<EventListenerOrEventListenerObject>();
+    const nativeAddEventListener = EventTarget.prototype.addEventListener;
+    const nativeRemoveEventListener = EventTarget.prototype.removeEventListener;
+    const nativeMatchMedia = window.matchMedia.bind(window);
+    const testWindow = window as typeof window & { __activeLenisWheelListeners: number };
+    testWindow.__activeLenisWheelListeners = 0;
+
+    EventTarget.prototype.addEventListener = function (
+      type,
+      listener,
+      options,
+    ) {
+      nativeAddEventListener.call(this, type, listener, options);
+      if (this === window && type === 'wheel' && listener) {
+        activeWheelListeners.add(listener);
+        testWindow.__activeLenisWheelListeners = activeWheelListeners.size;
+      }
+    };
+    EventTarget.prototype.removeEventListener = function (
+      type,
+      listener,
+      options,
+    ) {
+      nativeRemoveEventListener.call(this, type, listener, options);
+      if (this === window && type === 'wheel' && listener) {
+        activeWheelListeners.delete(listener);
+        testWindow.__activeLenisWheelListeners = activeWheelListeners.size;
+      }
+    };
+    window.matchMedia = (query) => {
+      if (query === '(pointer: fine)') throw new Error('Pointer capability unavailable');
+      return nativeMatchMedia(query);
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 2_500 });
+
+  const listenerBaseline = await page.evaluate(
+    () =>
+      (window as typeof window & { __activeLenisWheelListeners: number })
+        .__activeLenisWheelListeners,
+  );
+
+  await page.evaluate(() => {
+    document.dispatchEvent(new Event('astro:page-load'));
+    document.dispatchEvent(new Event('astro:page-load'));
+  });
+
+  await expect(page.locator('html')).not.toHaveClass(/\blenis\b/);
+  await expect(page.locator('html')).not.toHaveClass(/is-motion-ready|is-preloading/);
+  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+  await expect(page.locator('[data-hero-line]').first()).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { __activeLenisWheelListeners: number })
+            .__activeLenisWheelListeners,
+      ),
+    )
+    .toBe(listenerBaseline);
+
+  const initialScroll = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 500);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(initialScroll);
+});
+
+test('one throwing cleanup cannot block remaining lifecycle teardown', async ({ page }) => {
+  await page.addInitScript(() => {
+    const activeMenuClickListeners = new Set<EventListenerOrEventListenerObject>();
+    const nativeAddEventListener = EventTarget.prototype.addEventListener;
+    const nativeRemoveEventListener = EventTarget.prototype.removeEventListener;
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    const nativeClearTimeout = window.clearTimeout.bind(window);
+    const testWindow = window as typeof window & {
+      __armPreloaderCleanupFailure: () => void;
+      __activeMenuClickListeners: number;
+    };
+    let cleanupFailureArmed = false;
+    let preloaderTimer: number | undefined;
+    testWindow.__activeMenuClickListeners = 0;
+    testWindow.__armPreloaderCleanupFailure = () => {
+      cleanupFailureArmed = true;
+    };
+
+    window.setTimeout = ((handler: TimerHandler, timeout = 0, ...args: unknown[]) => {
+      const timer = nativeSetTimeout(handler, timeout, ...args);
+      if (timeout === 2_500) preloaderTimer = timer;
+      return timer;
+    }) as typeof window.setTimeout;
+    window.clearTimeout = ((timer) => {
+      if (cleanupFailureArmed && timer === preloaderTimer) {
+        cleanupFailureArmed = false;
+        throw new Error('Injected preloader cleanup failure');
+      }
+      nativeClearTimeout(timer);
+    }) as typeof window.clearTimeout;
+
+    EventTarget.prototype.addEventListener = function (
+      type,
+      listener,
+      options,
+    ) {
+      nativeAddEventListener.call(this, type, listener, options);
+      if (
+        this instanceof Element &&
+        this.matches('[data-menu-toggle]') &&
+        type === 'click' &&
+        listener
+      ) {
+        activeMenuClickListeners.add(listener);
+        testWindow.__activeMenuClickListeners = activeMenuClickListeners.size;
+      }
+    };
+    EventTarget.prototype.removeEventListener = function (
+      type,
+      listener,
+      options,
+    ) {
+      nativeRemoveEventListener.call(this, type, listener, options);
+      if (
+        this instanceof Element &&
+        this.matches('[data-menu-toggle]') &&
+        type === 'click' &&
+        listener
+      ) {
+        activeMenuClickListeners.delete(listener);
+        testWindow.__activeMenuClickListeners = activeMenuClickListeners.size;
+      }
+    };
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 2_500 });
+
+  const trigger = page.locator('[data-menu-toggle]');
+  await trigger.click();
+  await expect(page.locator('main')).toHaveAttribute('inert', '');
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & {
+        __armPreloaderCleanupFailure: () => void;
+      }
+    ).__armPreloaderCleanupFailure();
+    document.dispatchEvent(new Event('astro:before-swap'));
+  });
+
+  await expect(page.locator('html')).not.toHaveClass(/\blenis\b|is-motion-ready/);
+  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+  await page.evaluate(() => {
+    document.dispatchEvent(new Event('astro:page-load'));
+    document.dispatchEvent(new Event('astro:page-load'));
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { __activeMenuClickListeners: number })
+            .__activeMenuClickListeners,
+      ),
+    )
+    .toBe(1);
   await trigger.click();
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 });
@@ -155,10 +327,13 @@ test('project media receives restrained parallax translation', async ({ page }) 
     .toBeGreaterThan(1);
 });
 
-test('magnetic links respond modestly and return to rest', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.includes('mobile'), 'Magnetic response is pointer-only.');
+test('magnetic links respond modestly and return to rest', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 2_500 });
+  test.skip(
+    !(await page.evaluate(() => window.matchMedia('(pointer: fine)').matches)),
+    'Magnetic response requires a fine pointer.',
+  );
 
   const link = page.locator('[data-magnetic]').first();
   await link.scrollIntoViewIfNeeded();
@@ -281,4 +456,41 @@ test('mobile menu traps focus, marks content inert, and restores focus', async (
   await expect(trigger).toBeFocused();
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+});
+
+test('mobile menu navigation cleans state and remains usable across repeated swaps', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/projects/atlas-commerce/');
+  await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 3_000 });
+
+  const navigateThroughMenu = async (name: 'Proyectos' | 'Perfil') => {
+    const trigger = page.locator('[data-menu-toggle]');
+    await trigger.click();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('main')).toHaveAttribute('inert', '');
+    await page.locator('[data-menu-panel]').getByRole('link', { name, exact: true }).click();
+
+    await expect(page.locator('[data-project-card]')).toHaveCount(3);
+    await expect(page.locator('[data-site-header]')).toHaveCount(1);
+    await expect(page.locator('[data-site-footer]')).toHaveCount(1);
+    const currentTrigger = page.locator('[data-menu-toggle]');
+    await expect(currentTrigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('[data-menu-panel]')).toBeHidden();
+    await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+    await currentTrigger.focus();
+    await expect(currentTrigger).toBeFocused();
+  };
+
+  await navigateThroughMenu('Proyectos');
+
+  const projectCard = page.locator('[data-project-card]').first();
+  await projectCard.scrollIntoViewIfNeeded();
+  await expect(projectCard).toBeVisible();
+  await projectCard.getByRole('link').click();
+  await expect(page.locator('[data-project-hero]')).toBeVisible();
+
+  await navigateThroughMenu('Perfil');
+  await expect(page).toHaveURL(/\/#about$/);
+  await expect(page.locator('[data-site-header]')).toHaveCount(1);
+  await expect(page.locator('[data-site-footer]')).toHaveCount(1);
 });
