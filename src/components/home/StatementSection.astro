@@ -16,10 +16,11 @@ const lines = [
 <section id="statement" class="statement-section" aria-labelledby="statement-title">
   <div class="home-frame">
     <h2 id="statement-title" class="sr-only">Declaración</h2>
-    <p class="statement-section__copy" aria-label={statement}>
+    <p class="statement-section__accessible sr-only">{statement}</p>
+    <p class="statement-section__copy" aria-hidden="true">
       {
         lines.map((line) => (
-          <span class="statement-section__line-mask" aria-hidden="true">
+          <span class="statement-section__line-mask">
             <span data-reveal>{line}</span>
           </span>
         ))
