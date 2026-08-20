@@ -14,7 +14,9 @@ const { about, email } = Astro.props;
 
 <section id="about" class="about-section" aria-labelledby="about-title">
   <div class="home-frame about-section__grid">
-    <ConcentricRings class="about-section__rings" />
+    <div class="about-section__decoration" aria-hidden="true">
+      <ConcentricRings class="about-section__rings" />
+    </div>
 
     <div class="about-section__intro" data-reveal>
       <SectionLabel text={about.label} />

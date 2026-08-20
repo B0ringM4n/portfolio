@@ -14,7 +14,9 @@ const { hero, identity } = Astro.props;
   <div class="home-frame hero-section__grid">
     <p class="hero-section__eyebrow" data-reveal>{hero.eyebrow}</p>
 
-    <GradientSphere />
+    <div class="hero-section__decoration" aria-hidden="true" data-hero-decoration-owner>
+      <GradientSphere />
+    </div>
 
     <h1 id="hero-title" class="hero-section__title">
       {

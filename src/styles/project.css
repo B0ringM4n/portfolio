@@ -4,10 +4,6 @@
   padding-inline: var(--gutter);
 }
 
-.project-detail {
-  overflow: clip;
-}
-
 .project-kicker,
 .project-hero__metadata dt,
 .gallery figcaption,
@@ -46,7 +42,7 @@
 }
 
 .project-hero__cover img {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .project-hero__metadata {
@@ -226,7 +222,7 @@
 }
 
 .related-project__media {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 8 / 5;
   overflow: clip;
   background: var(--color-stone);
 }
@@ -238,7 +234,7 @@
 }
 
 .related-project__media img {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .related-project a:hover .related-project__content h3,
@@ -372,10 +368,6 @@
 
   .project-hero h1 {
     font-size: clamp(3.7rem, 18vw, 6.5rem);
-  }
-
-  .project-hero__cover {
-    aspect-ratio: 4 / 5;
   }
 
   .project-hero__metadata-cell,

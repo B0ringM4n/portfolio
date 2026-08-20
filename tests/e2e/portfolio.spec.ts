@@ -1,7 +1,25 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 // The production deadline is 2,500ms; 300ms covers browser scheduling plus one 50ms poll.
 const preloaderHardDeadlineWithSchedulerTolerance = 2_800;
+const classicScrollbarWidth = 15;
+
+async function ensureClassicScrollbarContentViewport(
+  page: Page,
+  surface: { width: number; height: number },
+) {
+  const nativeClientWidth = await page.evaluate(
+    () => document.documentElement.clientWidth,
+  );
+  if (nativeClientWidth === surface.width) {
+    // Headless Chromium uses overlay scrollbars. Reserve the same content width
+    // as the headed/classic browser while retaining the nominal surface in the test name.
+    await page.setViewportSize({
+      width: surface.width - classicScrollbarWidth,
+      height: surface.height,
+    });
+  }
+}
 
 test('first visit announces completion and hard-dismisses the preloader', async ({ page }) => {
   await page.goto('/');
@@ -115,14 +133,231 @@ for (const viewport of [
     await expect(page.locator('[data-preloader]')).toBeHidden({
       timeout: preloaderHardDeadlineWithSchedulerTolerance,
     });
+    await ensureClassicScrollbarContentViewport(page, viewport);
 
     const dimensions = await page.evaluate(() => ({
       clientWidth: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth,
     }));
+    expect(dimensions.clientWidth).toBeLessThanOrEqual(
+      viewport.width - classicScrollbarWidth,
+    );
     expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
   });
 }
+
+for (const width of [320, 360, 390] as const) {
+  test(`every mobile hero line stays inside the ${width}px content viewport`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    await expect(page.locator('[data-preloader]')).toBeHidden({
+      timeout: preloaderHardDeadlineWithSchedulerTolerance,
+    });
+    await ensureClassicScrollbarContentViewport(page, { width, height: 844 });
+
+    const layout = await page.evaluate(() => {
+      const clientWidth = document.documentElement.clientWidth;
+      const hero = document.querySelector<HTMLElement>('.hero-section');
+      const decorativeOwner = document.querySelector<HTMLElement>(
+        '[data-hero-decoration-owner]',
+      );
+      const lines = [...document.querySelectorAll<HTMLElement>('[data-hero-line]')].map(
+        (line) => {
+          const bounds = line.getBoundingClientRect();
+          return {
+            text: line.textContent?.trim() ?? '',
+            left: bounds.left,
+            right: bounds.right,
+          };
+        },
+      );
+
+      return {
+        clientWidth,
+        heroOverflow: hero ? getComputedStyle(hero).overflow : null,
+        decorativeOverflow: decorativeOwner
+          ? getComputedStyle(decorativeOwner).overflow
+          : null,
+        lines,
+      };
+    });
+
+    expect(layout.heroOverflow).toBe('visible');
+    expect(layout.decorativeOverflow).toBe('clip');
+    expect(layout.clientWidth).toBeLessThanOrEqual(width - classicScrollbarWidth);
+    expect(layout.lines).toHaveLength(3);
+    expect(layout.lines.map(({ text }) => text.toLocaleUpperCase('es'))).toEqual([
+      'DISEÑO',
+      'Y CÓDIGO',
+      'CON INTENCIÓN.',
+    ]);
+    for (const line of layout.lines) {
+      expect(line.left, `${width}px: ${line.text} left edge`).toBeGreaterThanOrEqual(0);
+      expect(line.right, `${width}px: ${line.text} right edge`).toBeLessThanOrEqual(
+        layout.clientWidth,
+      );
+    }
+  });
+}
+
+test('project covers preserve their complete natural artwork at desktop and mobile widths', async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 1_440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await expect(page.locator('[data-preloader]')).toBeHidden({
+      timeout: preloaderHardDeadlineWithSchedulerTolerance,
+    });
+
+    const homeCovers = page.locator('[data-project-card] .project-card__media img');
+    await expect(homeCovers).toHaveCount(3);
+    for (const cover of await homeCovers.all()) {
+      await cover.scrollIntoViewIfNeeded();
+      await expect(cover).toBeVisible();
+      await expect
+        .poll(() =>
+          cover.evaluate(
+            (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+          ),
+        )
+        .toBe(true);
+      const rendering = await cover.evaluate((image: HTMLImageElement) => {
+        const imageBounds = image.getBoundingClientRect();
+        const frameBounds = image
+          .closest<HTMLElement>('.project-card__media')
+          ?.getBoundingClientRect();
+        const styles = getComputedStyle(image);
+        const naturalRatio = image.naturalWidth / image.naturalHeight;
+        const boxRatio = imageBounds.width / imageBounds.height;
+        const contentWidth = boxRatio > naturalRatio
+          ? imageBounds.height * naturalRatio
+          : imageBounds.width;
+        const contentHeight = boxRatio > naturalRatio
+          ? imageBounds.height
+          : imageBounds.width / naturalRatio;
+        return {
+          naturalRatio,
+          imageBounds: {
+            left: imageBounds.left,
+            right: imageBounds.right,
+            top: imageBounds.top,
+            bottom: imageBounds.bottom,
+          },
+          frameBounds: frameBounds
+            ? {
+                left: frameBounds.left,
+                right: frameBounds.right,
+                top: frameBounds.top,
+                bottom: frameBounds.bottom,
+              }
+            : null,
+          contentBounds: {
+            left: imageBounds.left + (imageBounds.width - contentWidth) / 2,
+            right: imageBounds.right - (imageBounds.width - contentWidth) / 2,
+            top: imageBounds.top + (imageBounds.height - contentHeight) / 2,
+            bottom: imageBounds.bottom - (imageBounds.height - contentHeight) / 2,
+          },
+          objectFit: styles.objectFit,
+          transform: styles.transform,
+        };
+      });
+      expect(rendering.naturalRatio).toBeGreaterThan(0);
+      expect(rendering.objectFit).toBe('contain');
+      expect(rendering.transform).toBe('none');
+      expect(rendering.frameBounds).not.toBeNull();
+      expect(rendering.imageBounds.left).toBeGreaterThanOrEqual(rendering.frameBounds!.left);
+      expect(rendering.imageBounds.right).toBeLessThanOrEqual(rendering.frameBounds!.right);
+      expect(rendering.imageBounds.top).toBeGreaterThanOrEqual(rendering.frameBounds!.top);
+      expect(rendering.imageBounds.bottom).toBeLessThanOrEqual(rendering.frameBounds!.bottom);
+      expect(rendering.contentBounds.left).toBeGreaterThanOrEqual(rendering.frameBounds!.left);
+      expect(rendering.contentBounds.right).toBeLessThanOrEqual(rendering.frameBounds!.right);
+      expect(rendering.contentBounds.top).toBeGreaterThanOrEqual(rendering.frameBounds!.top);
+      expect(rendering.contentBounds.bottom).toBeLessThanOrEqual(rendering.frameBounds!.bottom);
+    }
+
+    await page.goto('/projects/atlas-commerce/');
+    const detailCover = page.locator('.project-hero__cover img');
+    await expect(detailCover).toBeVisible();
+    const detailRendering = await detailCover.evaluate((image: HTMLImageElement) => {
+      const frame = image.closest<HTMLElement>('.project-hero__cover');
+      const imageBounds = image.getBoundingClientRect();
+      const frameBounds = frame?.getBoundingClientRect();
+      const naturalRatio = image.naturalWidth / image.naturalHeight;
+      const boxRatio = imageBounds.width / imageBounds.height;
+      const contentWidth = boxRatio > naturalRatio
+        ? imageBounds.height * naturalRatio
+        : imageBounds.width;
+      const contentHeight = boxRatio > naturalRatio
+        ? imageBounds.height
+        : imageBounds.width / naturalRatio;
+      return {
+        naturalRatio,
+        objectFit: getComputedStyle(image).objectFit,
+        imageBounds: [imageBounds.left, imageBounds.top, imageBounds.right, imageBounds.bottom],
+        contentBounds: [
+          imageBounds.left + (imageBounds.width - contentWidth) / 2,
+          imageBounds.top + (imageBounds.height - contentHeight) / 2,
+          imageBounds.right - (imageBounds.width - contentWidth) / 2,
+          imageBounds.bottom - (imageBounds.height - contentHeight) / 2,
+        ],
+        frameBounds: frameBounds
+          ? [frameBounds.left, frameBounds.top, frameBounds.right, frameBounds.bottom]
+          : null,
+      };
+    });
+    expect(detailRendering.naturalRatio).toBeGreaterThan(0);
+    expect(detailRendering.objectFit).toBe('contain');
+    expect(detailRendering.imageBounds).toEqual(detailRendering.frameBounds);
+    expect(detailRendering.contentBounds[0]).toBeGreaterThanOrEqual(
+      detailRendering.frameBounds![0],
+    );
+    expect(detailRendering.contentBounds[1]).toBeGreaterThanOrEqual(
+      detailRendering.frameBounds![1],
+    );
+    expect(detailRendering.contentBounds[2]).toBeLessThanOrEqual(
+      detailRendering.frameBounds![2],
+    );
+    expect(detailRendering.contentBounds[3]).toBeLessThanOrEqual(
+      detailRendering.frameBounds![3],
+    );
+
+    const relatedCovers = page.locator('.related-project__media img');
+    await expect(relatedCovers).toHaveCount(2);
+    for (const cover of await relatedCovers.all()) {
+      await cover.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          cover.evaluate(
+            (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+          ),
+        )
+        .toBe(true);
+      const rendering = await cover.evaluate((image: HTMLImageElement) => {
+        const imageBounds = image.getBoundingClientRect();
+        const frameBounds = image
+          .closest<HTMLElement>('.related-project__media')
+          ?.getBoundingClientRect();
+        return {
+          naturalRatio: image.naturalWidth / image.naturalHeight,
+          objectFit: getComputedStyle(image).objectFit,
+          imageBounds: [imageBounds.left, imageBounds.top, imageBounds.right, imageBounds.bottom],
+          frameBounds: frameBounds
+            ? [frameBounds.left, frameBounds.top, frameBounds.right, frameBounds.bottom]
+            : null,
+        };
+      });
+      expect(rendering.naturalRatio).toBeGreaterThan(0);
+      expect(rendering.objectFit).toBe('contain');
+      expect(rendering.imageBounds).toEqual(rendering.frameBounds);
+    }
+  }
+});
 
 test('desktop keyboard order reaches the skip link and first navigation items', async ({ page }) => {
   await page.setViewportSize({ width: 1_440, height: 900 });

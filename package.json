@@ -4,10 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
+    "preview": "astro preview",
+    "preview:e2e": "vite preview --host 127.0.0.1 --port 4321",
     "check": "astro check",
     "build": "astro build",
+    "capture:visual": "env -u NO_COLOR -u FORCE_COLOR node scripts/capture-visual-audit.mjs",
     "test": "vitest run",
-    "test:e2e": "env -u NO_COLOR -u FORCE_COLOR playwright test",
+    "test:e2e": "npm run build && env -u NO_COLOR -u FORCE_COLOR playwright test",
     "verify:production": "node scripts/verify-production.mjs",
     "verify": "npm run check && npm test && npm run build && npm run verify:production"
   },

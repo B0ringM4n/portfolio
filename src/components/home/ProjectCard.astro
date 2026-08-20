@@ -15,14 +15,15 @@ const projectNumber = String(index + 1).padStart(2, '0');
 <article id={`project-${project.id}`} class="project-card" data-project-card data-reveal>
   <a class="project-card__link" href={`/projects/${project.id}/`} aria-label={`Ver proyecto ${title}`} data-magnetic>
     <div class="project-card__media">
-      <Image
-        src={cover}
-        alt={coverAlt}
-        widths={[480, 768, 1080, 1440]}
-        sizes="(max-width: 699px) calc(100vw - 2rem), (max-width: 1023px) calc(100vw - 3rem), 88vw"
-        loading="lazy"
-        data-parallax
-      />
+      <div class="project-card__artwork" data-parallax>
+        <Image
+          src={cover}
+          alt={coverAlt}
+          widths={[480, 768, 1080, 1440]}
+          sizes="(max-width: 699px) calc(100vw - 2rem), (max-width: 1023px) calc(100vw - 3rem), 88vw"
+          loading="lazy"
+        />
+      </div>
     </div>
 
     <div class="project-card__content">

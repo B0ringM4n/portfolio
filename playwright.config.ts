@@ -23,12 +23,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1',
+    command: 'npm run preview:e2e',
     url: 'http://127.0.0.1:4321',
     reuseExistingServer: true,
-    env: {
-      ...process.env,
-      ASTRO_DEV_BACKGROUND: '1',
-    },
   },
 });

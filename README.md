@@ -55,6 +55,8 @@ gallery:
 
 Every informative image needs specific, non-empty `coverAlt` or `alt` text. Use `wide` for a full gallery row and `half` for a two-up desktop item; all items become full width on mobile. Gallery order is the YAML list order. Replace assets and paths together, keep at least three items, and never reuse an `order` value from another project.
 
+Filenames and pixel dimensions are replaceable: the asset contract follows every local `cover` and gallery `image` path in frontmatter instead of requiring the default WebP names. Each referenced file must exist, use `.avif`, `.webp`, `.png`, `.jpeg`, or `.jpg` (case-insensitive), and report positive image dimensions. A project's gallery files must remain pairwise distinct. Cover artwork uses `object-fit: contain`, so a replacement keeps its complete composition without requiring the current 8:5 source ratio. `scripts/generate-project-assets.mjs` remains the deterministic way to restore the default WebP artwork; it is not required for custom replacements.
+
 ## Motion and reduced motion
 
 Client behavior lives in `src/scripts/`:
@@ -78,4 +80,17 @@ The audited reference captures are stable files under `artifacts/visual-audit/`:
 - `home-mobile-390x844.png`
 - `atlas-commerce-desktop-1440x900.png`
 
-Regenerate them at those exact viewport dimensions after layout, type, media, or motion changes, then rerun both verification gates.
+Regenerate them after layout, type, media, or motion changes. In one terminal, start the site:
+
+```sh
+npm run build
+npm run preview -- --host 127.0.0.1
+```
+
+Then run this exact command in another terminal:
+
+```sh
+npm run capture:visual
+```
+
+The capture command scrolls each page from top to bottom with browser wheel input to complete reveals and load lazy media, returns to the top, hides only the capture scrollbar, and overwrites the three stable files at exactly 1440 or 390 physical PNG pixels wide. Rerun both verification gates afterward.

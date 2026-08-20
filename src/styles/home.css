@@ -6,7 +6,6 @@
 
 .hero-section {
   min-block-size: 100dvh;
-  overflow: clip;
   border-block-end: var(--hairline);
 }
 
@@ -40,9 +39,16 @@
   align-self: start;
 }
 
-.gradient-sphere {
+.hero-section__decoration {
   position: absolute;
   z-index: -1;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+.gradient-sphere {
+  position: absolute;
   inset-block-start: 17%;
   inset-inline-start: 54%;
   inline-size: clamp(17rem, 35vw, 31rem);
@@ -185,6 +191,13 @@
   transform: translate(-50%, -50%);
 }
 
+.about-section__decoration {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
 .tech-wall-section {
   padding-block: clamp(4rem, 7vw, 7rem) clamp(10rem, 18vw, 18rem);
 }
@@ -306,34 +319,23 @@
 
 .project-card__media {
   grid-column: 1 / -1;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 8 / 5;
   overflow: clip;
   background: var(--color-stone);
 }
 
-.project-card:nth-child(2) .project-card__media {
-  aspect-ratio: 5 / 4;
-}
-
-.project-card:nth-child(3n) .project-card__media {
-  aspect-ratio: 3 / 2;
-}
-
-.project-card__media picture,
+.project-card__artwork,
 .project-card__media img {
   inline-size: 100%;
   block-size: 100%;
 }
 
-.project-card__media img {
-  object-fit: cover;
-  transform: scale(1.015);
-  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+.project-card__artwork {
+  padding-block: 3%;
 }
 
-.project-card__link:hover .project-card__media img,
-.project-card__link:focus-visible .project-card__media img {
-  transform: scale(1.045);
+.project-card__media img {
+  object-fit: contain;
 }
 
 .project-card__content {
@@ -668,17 +670,17 @@
 
   .hero-section__title {
     align-self: center;
-    font-size: clamp(3.65rem, 18.2vw, 6.4rem);
+    font-size: clamp(3.25rem, 16.5vw, 6.4rem);
     letter-spacing: -0.075em;
     line-height: 0.78;
   }
 
   .hero-section__line-mask:nth-child(2) {
-    padding-inline-start: 4%;
+    padding-inline-start: 3%;
   }
 
   .hero-section__line-mask:nth-child(3) {
-    padding-inline-start: 8%;
+    padding-inline-start: 6%;
   }
 
   .hero-section__role {
@@ -789,7 +791,7 @@
   .project-card__media,
   .project-card:nth-child(2) .project-card__media,
   .project-card:nth-child(3n) .project-card__media {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 8 / 5;
   }
 
   .project-card__number,
