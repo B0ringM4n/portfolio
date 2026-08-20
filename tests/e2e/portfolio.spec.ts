@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 
+// The production deadline is 2,500ms; 300ms covers browser scheduling plus one 50ms poll.
+const preloaderHardDeadlineWithSchedulerTolerance = 2_800;
+
 test('first visit announces completion and hard-dismisses the preloader', async ({ page }) => {
   await page.goto('/');
 
@@ -76,8 +79,14 @@ test(
     });
     await page.goto('/');
 
-    await expect(page.locator('[data-preloader]')).toBeVisible();
-    await expect(page.locator('[data-preloader]')).toBeHidden({ timeout: 3_000 });
+    const preloader = page.locator('[data-preloader]');
+    await expect(preloader).toBeVisible();
+    await expect
+      .poll(() => preloader.isHidden(), {
+        timeout: preloaderHardDeadlineWithSchedulerTolerance,
+        intervals: [50],
+      })
+      .toBe(true);
     await expect(page.locator('html')).not.toHaveClass(/is-preloading/);
   },
 );
@@ -92,6 +101,76 @@ test('server-rendered content stays visible without JavaScript', async ({ browse
   await expect(page.locator('[data-project-card]')).toHaveCount(3);
 
   await context.close();
+});
+
+for (const viewport of [
+  { name: 'desktop', width: 1_440, height: 900 },
+  { name: 'mobile', width: 390, height: 844 },
+] as const) {
+  test(`home has no horizontal overflow at the ${viewport.name} audit viewport`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await expect(page.locator('[data-preloader]')).toBeHidden({
+      timeout: preloaderHardDeadlineWithSchedulerTolerance,
+    });
+
+    const dimensions = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+  });
+}
+
+test('desktop keyboard order reaches the skip link and first navigation items', async ({ page }) => {
+  await page.setViewportSize({ width: 1_440, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('[data-preloader]')).toBeHidden({
+    timeout: preloaderHardDeadlineWithSchedulerTolerance,
+  });
+
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Saltar al contenido' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('[data-site-header] > div > a').first()).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(
+    page.locator('[data-site-header] nav[aria-label="Navegación principal"] a').first(),
+  ).toBeFocused();
+});
+
+test('contact email remains a native mail link', async ({ page }) => {
+  await page.goto('/');
+  const email = page.locator('#contact a[href^="mailto:"]');
+
+  await expect(email).toHaveCount(1);
+  await expect(email).toHaveAttribute('href', 'mailto:hello@alexrivera.dev');
+});
+
+test('every project gallery image has useful text and positive rendered dimensions', async ({
+  page,
+}) => {
+  for (const slug of ['atlas-commerce', 'mono-culture', 'nexo-finance']) {
+    await page.goto(`/projects/${slug}/`);
+    const images = page.locator('[data-gallery-item] img');
+    await expect(images).toHaveCount(3);
+
+    for (const image of await images.all()) {
+      const rendered = await image.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          alt: element.getAttribute('alt')?.trim() ?? '',
+          width: bounds.width,
+          height: bounds.height,
+        };
+      });
+      expect(rendered.alt, `${slug} gallery image alt`).not.toBe('');
+      expect(rendered.width, `${slug} gallery image width`).toBeGreaterThan(0);
+      expect(rendered.height, `${slug} gallery image height`).toBeGreaterThan(0);
+    }
+  }
 });
 
 test('one failed enhancement does not prevent mobile menu setup', async ({ page }) => {
