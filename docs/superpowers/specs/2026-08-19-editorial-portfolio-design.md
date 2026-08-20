@@ -32,12 +32,15 @@ The visual concept is "iridescent signal on printed stock": a restrained warm mo
 - Store a session flag after completion so subsequent in-site navigation does not replay the full sequence.
 - If JavaScript is unavailable, the preloader is not rendered and content remains visible.
 - If reduced motion is requested, show a short non-animated cover and remove it immediately when the document is ready.
+- Dismiss the preloader after a maximum of 2.5 seconds even if font loading, `sessionStorage`, or animation initialization fails.
+- Treat `sessionStorage` access as optional: catch access errors and continue as a first visit without blocking the page.
 
 ### 3.2 Header and navigation
 
 - Show the portfolio identity at the left and availability, projects, and contact links at the right on wide screens.
 - Use in-page anchors for landing sections and regular routes for project pages.
 - Use a compact menu trigger on mobile that opens an accessible full-screen navigation panel.
+- Keep a compact row of native section links visible on narrow screens until JavaScript adds an enhancement class. After enhancement initializes, the menu trigger replaces that row.
 - Preserve native link behavior and a visible focus state.
 
 ### 3.3 Hero
@@ -73,7 +76,7 @@ The visual concept is "iridescent signal on printed stock": a restrained warm mo
 
 ### 3.7 Featured projects
 
-- Show a section heading, total count, and an `ALL PROJECTS →` affordance.
+- Show a section heading, total count, and a `VIEW PROJECTS ↓` anchor that moves focus/scroll to the first project card. The landing renders the complete initial project collection, so the control does not imply a separate index.
 - Render large project cards on white grid-paper surfaces.
 - Vary card scale and media proportion in a controlled editorial sequence rather than a uniform card grid.
 - Each card contains title, year, category/capability markers, image, and link to the project route.
@@ -111,11 +114,20 @@ Each project route follows this sequence:
 The gallery supports:
 
 - Full-width landscape media.
-- Two-up portrait media on desktop that becomes a vertical sequence on mobile.
+- Two-up half-width media on desktop that becomes a vertical sequence on mobile.
 - Optional captions.
 - Explicit alternative text.
-- Optional per-item layout choice: `wide`, `portrait`, or `split`.
+- A required per-item layout choice of `wide` or `half`.
 - Subtle parallax only when the user allows motion.
+
+Each gallery item has this validated content contract:
+
+- `image`: a relative local raster import resolved by Astro's `image()` schema helper to `ImageMetadata`.
+- `alt`: a non-empty string describing informative media.
+- `caption`: an optional short string.
+- `layout`: `wide` or `half`.
+
+Accepted gallery formats are AVIF, WebP, PNG, and JPEG. A `wide` item spans the full gallery grid. Two consecutive `half` items share one row on desktop; an unmatched `half` item occupies the first half of its row. All items become full width on mobile. Technology marks may use SVG, but project covers and gallery media use the raster contract so Astro can validate dimensions and optimize output consistently.
 
 Every project page must be generated from validated content. Unknown slugs resolve to Astro's static 404 rather than a partially rendered template.
 
@@ -166,9 +178,10 @@ No shadows are permitted. Cards and media remain square. Only interactive hit ar
 
 - Use `gsap` and `ScrollTrigger` for coordinated timelines, viewport reveals, parallax, and page covers.
 - Use `lenis` for smooth scroll on capable devices.
+- Enable Astro's `<ClientRouter fallback="swap" />` once in `BaseLayout` to provide client-side navigation and an immediate non-animated swap in browsers without native transition support.
 - Keep animation bootstrapping in a small client module. Astro components must not each create unrelated global animation loops.
 - Connect Lenis updates to GSAP's ticker and refresh ScrollTrigger after fonts and images needed for layout are ready.
-- Destroy listeners, Lenis instances, and ScrollTriggers before Astro page swaps and reinitialize after swaps.
+- Register global lifecycle listeners once. Destroy page-scoped listeners, Lenis instances, and ScrollTriggers on `astro:before-swap`; initialize the destination page on `astro:page-load`; use `astro:after-swap` only for final pre-paint cover/scroll state. Initialization returns one idempotent cleanup function.
 
 ### 6.2 Animation language
 
@@ -195,7 +208,7 @@ No shadows are permitted. Cards and media remain square. Only interactive hit ar
 
 ### 7.2 Layouts
 
-- `src/layouts/BaseLayout.astro`: document metadata, local font, global styles, header, page-transition shell, client-motion entry point, and footer slot ownership.
+- `src/layouts/BaseLayout.astro`: document metadata, local font, global styles, header, `<ClientRouter />`, page-transition shell, client-motion entry point, main-content slot, and the single shared `Footer` render. Pages provide footer/contact data as layout props; they do not render another footer.
 - `src/layouts/ProjectLayout.astro`: shared project chrome and project metadata composition.
 
 ### 7.3 Section components
@@ -248,24 +261,24 @@ Required project fields:
 - `coverAlt`
 - `question`
 - `objective`
+- `strategy`
+- `outcome`
+- `order`
 - `gallery` with at least three items
 
 Optional fields:
 
 - `client`
 - `externalUrl`
-- `featured`
-- `order`
-- `outcome`
 
-Build-time schema validation rejects missing required content, malformed URLs, duplicate explicit ordering, or gallery items without alt text.
+Build-time schema validation rejects missing required content, malformed URLs, duplicate explicit ordering, unsupported/local-missing images, or gallery items without alt text/layout. Cover and gallery fields use Astro's `image()` helper, producing validated `ImageMetadata` with source dimensions.
 
 ## 8. Data and Rendering Flow
 
 1. Astro loads and validates the project collection at build time.
-2. The landing queries featured projects, sorts them by explicit order and then year, and passes normalized entries to `ProjectsSection`.
+2. The landing queries the project collection, sorts it by required ascending explicit order, then descending year, then slug for deterministic tie-breaking, and passes normalized entries to `ProjectsSection`. Duplicate explicit order values are rejected by the repository verifier.
 3. `getStaticPaths()` returns one path and validated props object per project.
-4. The detail page renders project content and requests related entries by shared capability, excluding the current project.
+4. The detail page renders project content and requests at most three related entries by number of shared capabilities, then project order, then slug, excluding the current project.
 5. Site-wide copy and links come from `site.ts` and are passed into the relevant top-level components.
 6. Animation modules query stable `data-*` hooks after DOM readiness; component classes remain styling hooks rather than implicit behavior contracts.
 
@@ -279,7 +292,9 @@ No runtime API, CMS, database, or server rendering is required for the initial r
 - External project links are optional and omitted cleanly when absent.
 - Images use fixed aspect-ratio containers to prevent layout shift.
 - Animation initialization failures leave all content visible and native scrolling intact.
+- Preloader errors or timeouts remove the cover, clear temporary document scroll locks, and never prevent native interaction.
 - The mobile navigation controls focus, closes with Escape, restores focus to the trigger, and prevents background interaction while open.
+- Without JavaScript, the mobile fallback link row remains visible and the menu overlay remains absent.
 - Email and external links remain real anchors and do not depend on animation handlers.
 
 ## 10. Accessibility and Performance
@@ -321,5 +336,4 @@ The work is accepted when all of the following are true:
 - No WebGL or Three.js scene.
 - No copied OFF+BRAND assets, client names, portfolio copy, or proprietary fonts.
 - No secondary color theme, dark mode, rounded card system, or shadow-based elevation.
-- No filtering application or separate all-projects index in the initial release; the landing's featured-work region is the project index.
-
+- No filtering application or separate all-projects index in the initial release; the landing's work region renders the complete initial project collection.
