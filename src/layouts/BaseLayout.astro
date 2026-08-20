@@ -50,5 +50,8 @@ const canonical = Astro.site ? new URL(canonicalPath, Astro.site) : undefined;
       navigation={siteData.navigation}
       socials={siteData.socials}
     />
+    <script>
+      import '@/scripts/app';
+    </script>
   </body>
 </html>

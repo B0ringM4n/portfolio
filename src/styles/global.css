@@ -16,6 +16,11 @@ html.lenis body {
   scroll-behavior: auto;
 }
 
+html.is-preloading,
+html.is-preloading body {
+  overflow: hidden;
+}
+
 body {
   min-inline-size: 20rem;
   margin: 0;
@@ -107,6 +112,16 @@ video {
   border: 0;
 }
 
+::view-transition-old(root) {
+  animation-duration: 180ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -115,5 +130,11 @@ video {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
   }
 }

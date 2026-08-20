@@ -211,6 +211,10 @@
   color: var(--color-paper);
 }
 
+.preloader:not([hidden]) {
+  will-change: transform;
+}
+
 .preloader[hidden] {
   display: none;
 }
