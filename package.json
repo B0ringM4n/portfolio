@@ -23,10 +23,10 @@
   },
   "devDependencies": {
     "@astrojs/check": "latest",
-    "@types/node": "latest",
     "@playwright/test": "latest",
+    "@types/node": "latest",
     "sharp": "latest",
-    "typescript": "latest",
+    "typescript": "^6.0.0",
     "vitest": "latest"
   }
 }
