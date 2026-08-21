@@ -1,0 +1,62 @@
+---
+import type { NavItem, SiteData } from '@/types/site';
+
+interface Props {
+  name: string;
+  availability: string;
+  navigation: NavItem[];
+  copy: SiteData['copy'];
+}
+
+const { name, availability, navigation, copy } = Astro.props;
+---
+
+<header class="site-header" data-site-header>
+  <div class="site-header__inner" data-menu-background data-hero-opening="header">
+    <a class="site-header__identity" href="/" aria-label={`${name}, inicio`}>{name}</a>
+
+    <nav class="site-header__nav" aria-label="Navegación principal">
+      {navigation.map(({ label, href }) => <a href={href}>{label}</a>)}
+    </nav>
+
+    <div class="site-header__actions">
+      <a class="site-header__availability" href="/#contact">{availability}</a>
+      <button
+        class="site-header__menu-toggle"
+        type="button"
+        aria-label={copy.menuOpenLabel}
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        data-menu-toggle
+        data-menu-open-label={copy.menuOpenStateLabel}
+      >
+        {copy.menuText}
+      </button>
+    </div>
+
+    <nav class="site-header__mobile-fallback" aria-label="Navegación de secciones">
+      {navigation.map(({ label, href }) => <a href={href}>{label}</a>)}
+    </nav>
+  </div>
+
+  <nav
+    id="mobile-menu"
+    class="site-header__mobile-panel"
+    aria-label="Menú móvil"
+    aria-modal="true"
+    role="dialog"
+    tabindex="-1"
+    data-menu-panel
+    hidden
+  >
+    {navigation.map(({ label, href }) => <a href={href}>{label}</a>)}
+    <button
+      class="site-header__menu-close"
+      type="button"
+      aria-label={copy.menuCloseLabel}
+      data-menu-close
+    >
+      {copy.menuCloseLabel}
+    </button>
+  </nav>
+</header>

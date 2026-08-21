@@ -1,0 +1,30 @@
+---
+import ConcentricRings from '@/components/decor/ConcentricRings.astro';
+import SectionLabel from '@/components/ui/SectionLabel.astro';
+import TextLink from '@/components/ui/TextLink.astro';
+import type { SiteData } from '@/types/site';
+
+interface Props {
+  about: SiteData['about'];
+  email: string;
+  contactCta: string;
+}
+
+const { about, email, contactCta } = Astro.props;
+---
+
+<section id="about" class="about-section" aria-labelledby="about-title">
+  <div class="home-frame about-section__grid">
+    <div class="about-section__decoration" aria-hidden="true">
+      <ConcentricRings class="about-section__rings" />
+    </div>
+
+    <div class="about-section__intro" data-reveal>
+      <SectionLabel text={about.label} />
+      <h2 id="about-title">{about.lead}</h2>
+      <TextLink href={`mailto:${email}`} label={contactCta} class="about-section__link" />
+    </div>
+
+    <p class="about-section__body" data-reveal>{about.body}</p>
+  </div>
+</section>

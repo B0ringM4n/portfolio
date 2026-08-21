@@ -1,0 +1,30 @@
+---
+import type { SiteData, Technology } from '@/types/site';
+
+interface Props {
+  technologies: Technology[];
+  copy: SiteData['copy'];
+}
+
+const { technologies, copy } = Astro.props;
+---
+
+<section id="stack" class="tech-wall-section" aria-labelledby="stack-title">
+  <div class="home-frame">
+    <h2 id="stack-title" class="tech-wall-section__title" data-reveal>{copy.technologiesHeading}</h2>
+
+    <ul class="tech-wall-section__grid">
+      {
+        technologies.map(({ name, category, mark }) => (
+          <li class="tech-wall-section__cell" data-tech-cell data-reveal>
+            <img src={`/marks/${mark}.svg`} alt={`${copy.technologyMarkAltPrefix} ${name}`} width="96" height="96" loading="lazy" />
+            <div class="tech-wall-section__meta">
+              <h3>{name}</h3>
+              <p>{category}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

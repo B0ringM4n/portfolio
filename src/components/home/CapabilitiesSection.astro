@@ -1,0 +1,30 @@
+---
+import SectionLabel from '@/components/ui/SectionLabel.astro';
+import type { Capability } from '@/types/site';
+
+interface Props {
+  capabilities: Capability[];
+  label: string;
+}
+
+const { capabilities, label } = Astro.props;
+---
+
+<section id="capabilities" class="capabilities-section" aria-labelledby="capabilities-title">
+  <div class="home-frame">
+    <SectionLabel text={label} />
+    <h2 id="capabilities-title" class="sr-only">{label}</h2>
+
+    <ol class="capabilities-section__list">
+      {
+        capabilities.map(({ name, description }, index) => (
+          <li data-reveal>
+            <p class="capabilities-section__index">{String(index + 1).padStart(2, '0')}</p>
+            <h3>{name}</h3>
+            <p class="capabilities-section__description">{description}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

@@ -1,0 +1,31 @@
+---
+interface Props {
+  statement: string;
+  heading: string;
+}
+
+const { statement, heading } = Astro.props;
+const words = statement.split(' ');
+const lineLength = Math.ceil(words.length / 3);
+const lines = [
+  words.slice(0, lineLength).join(' '),
+  words.slice(lineLength, lineLength * 2).join(' '),
+  words.slice(lineLength * 2).join(' '),
+].filter(Boolean);
+---
+
+<section id="statement" class="statement-section" aria-labelledby="statement-title">
+  <div class="home-frame">
+    <h2 id="statement-title" class="sr-only">{heading}</h2>
+    <p class="statement-section__accessible sr-only">{statement}</p>
+    <p class="statement-section__copy" aria-hidden="true">
+      {
+        lines.map((line) => (
+          <span class="statement-section__line-mask">
+            <span data-reveal>{line}</span>
+          </span>
+        ))
+      }
+    </p>
+  </div>
+</section>

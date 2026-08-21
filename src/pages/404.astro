@@ -1,0 +1,18 @@
+---
+import { siteData } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/project.css';
+---
+
+<BaseLayout
+  title={`Página no encontrada — ${siteData.identity.name}`}
+  description="La página que buscas no existe o cambió de lugar."
+  canonicalPath="/404/"
+>
+  <section class="not-found project-frame" aria-labelledby="not-found-title">
+    <p class="project-kicker">Error 404</p>
+    <h1 id="not-found-title">Esta página no está aquí.</h1>
+    <p>Puede que el enlace haya cambiado o que la dirección no sea correcta.</p>
+    <a href="/">Volver al inicio ↗</a>
+  </section>
+</BaseLayout>

@@ -1,0 +1,25 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import AboutSection from '@/components/home/AboutSection.astro';
+import CapabilitiesSection from '@/components/home/CapabilitiesSection.astro';
+import ContactSection from '@/components/home/ContactSection.astro';
+import HeroSection from '@/components/home/HeroSection.astro';
+import ProjectsSection from '@/components/home/ProjectsSection.astro';
+import StatementSection from '@/components/home/StatementSection.astro';
+import TechWallSection from '@/components/home/TechWallSection.astro';
+import { siteData } from '@/data/site';
+import { getProjects } from '@/lib/projects';
+import '@/styles/home.css';
+
+const projects = await getProjects();
+---
+
+<BaseLayout title={siteData.seo.title} description={siteData.seo.description}>
+  <HeroSection hero={siteData.hero} identity={siteData.identity} copy={siteData.copy} />
+  <StatementSection statement={siteData.statement} heading={siteData.copy.statementHeading} />
+  <AboutSection about={siteData.about} email={siteData.contact.email} contactCta={siteData.copy.aboutContactCta} />
+  <TechWallSection technologies={siteData.technologies} copy={siteData.copy} />
+  <ProjectsSection projects={projects} copy={siteData.copy} />
+  <CapabilitiesSection capabilities={siteData.capabilities} label={siteData.copy.capabilitiesLabel} />
+  <ContactSection slot="contact" contact={siteData.contact} />
+</BaseLayout>

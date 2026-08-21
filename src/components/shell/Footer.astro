@@ -1,0 +1,41 @@
+---
+import type { NavItem, SocialLink } from '@/types/site';
+
+interface Props {
+  name: string;
+  location: string;
+  timezone: string;
+  availability: string;
+  navigation: NavItem[];
+  socials: SocialLink[];
+}
+
+const { name, location, timezone, availability, navigation, socials } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer" data-site-footer data-menu-background>
+  <div class="site-footer__inner">
+    <div class="site-footer__identity">
+      <p>{name}</p>
+      <p>{location} · {timezone}</p>
+      <p>{availability}</p>
+      <p>© {year}</p>
+    </div>
+
+    <div class="site-footer__links">
+      <nav class="site-footer__nav" aria-label="Navegación del pie">
+        {navigation.map(({ label, href }) => <a href={href}>{label}</a>)}
+      </nav>
+      <nav class="site-footer__socials" aria-label="Redes sociales">
+        {
+          socials.map(({ label, href, external }) => (
+            <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined}>
+              {label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </div>
+</footer>

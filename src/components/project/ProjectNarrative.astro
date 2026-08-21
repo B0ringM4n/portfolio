@@ -1,0 +1,50 @@
+---
+interface Props {
+  question: string;
+  objective: string;
+  strategy: string;
+  outcome: string;
+}
+
+const { question, objective, strategy, outcome } = Astro.props;
+---
+
+<div class="project-narrative">
+  <section
+    class="project-narrative__statement project-narrative__statement--question project-frame"
+    aria-labelledby="project-question-title"
+    data-project-question
+  >
+    <p class="project-kicker">La pregunta</p>
+    <h2 id="project-question-title">{question}</h2>
+  </section>
+
+  <section
+    class="project-narrative__statement project-narrative__statement--objective project-frame"
+    aria-labelledby="project-objective-title"
+    data-project-objective
+  >
+    <p class="project-kicker">El objetivo</p>
+    <h2 id="project-objective-title">{objective}</h2>
+  </section>
+
+  <section
+    class="project-narrative__detail project-frame"
+    aria-labelledby="project-strategy-title"
+    data-project-strategy
+  >
+    <h2 id="project-strategy-title">La estrategia</h2>
+    <p>{strategy}</p>
+  </section>
+
+  <slot name="gallery" />
+
+  <section
+    class="project-narrative__detail project-narrative__detail--outcome project-frame"
+    aria-labelledby="project-outcome-title"
+    data-project-outcome
+  >
+    <h2 id="project-outcome-title">El resultado</h2>
+    <p>{outcome}</p>
+  </section>
+</div>

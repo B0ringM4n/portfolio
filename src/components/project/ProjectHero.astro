@@ -1,0 +1,75 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { title, client, year, role, capabilities, cover, coverAlt, externalUrl } = project.data;
+const projectType = capabilities[0];
+---
+
+<header class="project-hero project-frame" data-project-hero>
+  <p class="project-kicker">Proyecto seleccionado</p>
+  <h1>{title}</h1>
+
+  <div class="project-hero__cover">
+    <Image
+      src={cover}
+      alt={coverAlt}
+      widths={[640, 960, 1280, 1600]}
+      sizes="(max-width: 699px) calc(100vw - 2rem), (max-width: 1439px) calc(100vw - 5rem), 1400px"
+      loading="eager"
+      fetchpriority="high"
+    />
+  </div>
+
+  <dl class="project-hero__metadata">
+    <div class="project-hero__metadata-cell project-hero__metadata-cell--type">
+      <dt>Tipo de proyecto</dt>
+      <dd>{projectType}</dd>
+    </div>
+    {
+      client && (
+        <div class="project-hero__metadata-cell project-hero__metadata-cell--client">
+          <dt>Cliente</dt>
+          <dd>{client}</dd>
+        </div>
+      )
+    }
+    <div class="project-hero__metadata-cell project-hero__metadata-cell--year">
+      <dt>Año</dt>
+      <dd>{year}</dd>
+    </div>
+    <div class="project-hero__metadata-cell project-hero__metadata-cell--role">
+      <dt>Rol</dt>
+      <dd>{role}</dd>
+    </div>
+    <div
+      class:list={[
+        'project-hero__metadata-cell',
+        'project-hero__metadata-cell--capabilities',
+        !externalUrl && 'project-hero__metadata-cell--full',
+      ]}
+    >
+      <dt>Capacidades</dt>
+      <dd>
+        <ul>
+          {capabilities.map((capability) => <li>{capability}</li>)}
+        </ul>
+      </dd>
+    </div>
+    {
+      externalUrl && (
+        <div class="project-hero__metadata-cell project-hero__metadata-cell--link">
+          <dt>Enlace</dt>
+          <dd>
+            <a href={externalUrl} target="_blank" rel="noreferrer">Visitar sitio ↗</a>
+          </dd>
+        </div>
+      )
+    }
+  </dl>
+</header>

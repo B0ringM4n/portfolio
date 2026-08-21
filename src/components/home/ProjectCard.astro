@@ -1,0 +1,57 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import type { SiteData } from '@/types/site';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  index: number;
+  copy: SiteData['copy'];
+}
+
+const { project, index, copy } = Astro.props;
+const { title, summary, year, capabilities, cover, coverAlt } = project.data;
+const projectNumber = String(index + 1).padStart(2, '0');
+const mediaRatios = ['landscape', 'editorial', 'cinematic'] as const;
+const mediaRatio = mediaRatios[index % mediaRatios.length];
+---
+
+<article id={`project-${project.id}`} class="project-card" data-project-card data-reveal>
+  <a class="project-card__link" href={`/projects/${project.id}/`} aria-label={`${copy.projectLinkLabelPrefix} ${title}`} data-magnetic>
+    <div class:list={['project-card__media', `project-card__media--${mediaRatio}`]} data-media-ratio={mediaRatio}>
+      <div class="project-card__artwork" data-parallax>
+        <Image
+          src={cover}
+          alt={coverAlt}
+          widths={[480, 768, 1080, 1440]}
+          sizes="(max-width: 699px) calc(100vw - 2rem), (max-width: 1023px) calc(100vw - 3rem), 88vw"
+          loading="lazy"
+        />
+      </div>
+    </div>
+
+    <div class="project-card__content">
+      <div class="project-card__paper-grid" aria-hidden="true">
+        <span class="project-card__grid-line project-card__grid-line--v1"></span>
+        <span class="project-card__grid-line project-card__grid-line--v2"></span>
+        <span class="project-card__grid-line project-card__grid-line--v3"></span>
+        <span class="project-card__grid-line project-card__grid-line--v4"></span>
+        <span class="project-card__grid-line project-card__grid-line--v5"></span>
+        <span class="project-card__grid-line project-card__grid-line--h1"></span>
+        <span class="project-card__grid-line project-card__grid-line--h2"></span>
+      </div>
+      <p class="project-card__number" aria-hidden="true">{projectNumber}</p>
+      <div class="project-card__heading">
+        <h3>{title}</h3>
+        <span class="project-card__arrow" aria-hidden="true">↗</span>
+      </div>
+      <p class="project-card__summary">{summary}</p>
+      <div class="project-card__meta">
+        <p>{year}</p>
+        <ul aria-label={copy.projectCapabilitiesLabel}>
+          {capabilities.map((capability) => <li>{capability}</li>)}
+        </ul>
+      </div>
+    </div>
+  </a>
+</article>
